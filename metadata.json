@@ -1,0 +1,7 @@
+{
+  "name": "Sommelier AI",
+  "description": "Scan wine bottles to instantly get vintage details, pricing, tasting notes, and winery history using Gemini AI.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
