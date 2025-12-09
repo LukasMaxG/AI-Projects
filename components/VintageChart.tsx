@@ -127,7 +127,7 @@ export const VintageChart: React.FC<VintageChartProps> = ({ data, currentVintage
                   y={cy - 20} 
                   textAnchor="middle" 
                   className={`text-2xl font-bold fill-wine-900 ${isCurrent ? 'font-bold' : 'font-medium opacity-70'}`}
-                  style={{ fontSize: '24px', fontFamily: '"Plus Jakarta Sans", sans-serif' }}
+                  style={{ fontSize: '24px', fontFamily: '"Inter", sans-serif' }}
                 >
                   {d.score}
                 </text>
@@ -138,7 +138,7 @@ export const VintageChart: React.FC<VintageChartProps> = ({ data, currentVintage
                   y={height} 
                   textAnchor="middle" 
                   className={`fill-wine-800 ${isCurrent ? 'font-bold' : 'font-medium opacity-60'}`}
-                  style={{ fontSize: '20px', fontFamily: '"Plus Jakarta Sans", sans-serif' }}
+                  style={{ fontSize: '20px', fontFamily: '"Inter", sans-serif' }}
                 >
                   {d.year}
                 </text>

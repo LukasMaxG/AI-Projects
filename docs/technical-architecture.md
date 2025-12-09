@@ -7,7 +7,7 @@
 *   **Styling**: Tailwind CSS (CDN-based for simplicity)
 *   **Typography**: 
     *   Serif: *Playfair Display* (Headings)
-    *   Sans: *Plus Jakarta Sans* (Body/UI)
+    *   Sans: *Inter* (Body/UI - Replaces Plus Jakarta Sans for improved readability)
 *   **AI Provider**: Google Gemini API (`@google/genai` SDK)
 *   **Icons**: Lucide React
 

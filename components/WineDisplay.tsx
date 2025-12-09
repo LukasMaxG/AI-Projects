@@ -207,7 +207,7 @@ ${data.sources?.join('\n') || 'Gemini Knowledge Base'}
                     </div>
                     <div>
                       <p className="text-xs font-bold text-stone-500 uppercase">Soil Composition</p>
-                      <p className="text-stone-800 text-sm font-medium">{data.terroir.soil.join(', ')}</p>
+                      <p className="text-stone-800 text-base font-medium">{data.terroir.soil.join(', ')}</p>
                     </div>
                  </div>
                )}
@@ -218,7 +218,7 @@ ${data.sources?.join('\n') || 'Gemini Knowledge Base'}
                     </div>
                     <div>
                       <p className="text-xs font-bold text-stone-500 uppercase">Aging & Oak</p>
-                      <p className="text-stone-800 text-sm font-medium leading-snug">{data.terroir.oak}</p>
+                      <p className="text-stone-800 text-base font-medium leading-snug">{data.terroir.oak}</p>
                     </div>
                  </div>
                )}
@@ -260,17 +260,17 @@ ${data.sources?.join('\n') || 'Gemini Knowledge Base'}
           <h3 className="flex items-center gap-2 text-lg font-serif font-bold text-wine-950 mb-4">
             <Droplet className="w-5 h-5 text-wine-500" /> Tasting Profile
           </h3>
-          <div className="space-y-4 text-sm text-gray-600 leading-relaxed bg-wine-50/30 p-4 rounded-2xl border border-wine-100/50">
+          <div className="space-y-4 text-base text-gray-700 leading-relaxed bg-wine-50/30 p-4 rounded-2xl border border-wine-100/50">
             <div className="flex gap-3">
-               <span className="font-bold text-wine-800 w-16 shrink-0 uppercase text-xs tracking-wide pt-1">Eye</span>
+               <span className="font-bold text-wine-800 w-16 shrink-0 uppercase text-xs tracking-wide pt-1.5">Eye</span>
                <span>{data.color}</span>
             </div>
             <div className="flex gap-3">
-               <span className="font-bold text-wine-800 w-16 shrink-0 uppercase text-xs tracking-wide pt-1">Nose</span>
+               <span className="font-bold text-wine-800 w-16 shrink-0 uppercase text-xs tracking-wide pt-1.5">Nose</span>
                <span>{data.nose}</span>
             </div>
             <div className="flex gap-3">
-               <span className="font-bold text-wine-800 w-16 shrink-0 uppercase text-xs tracking-wide pt-1">Palate</span>
+               <span className="font-bold text-wine-800 w-16 shrink-0 uppercase text-xs tracking-wide pt-1.5">Palate</span>
                <span>{data.taste}</span>
             </div>
           </div>
@@ -288,12 +288,12 @@ ${data.sources?.join('\n') || 'Gemini Knowledge Base'}
                         <p className="text-[0.65rem] text-wine-300 uppercase tracking-widest mb-1">Drink Window</p>
                         <div className="flex items-center gap-2">
                              <Calendar className="w-4 h-4 text-wine-400" />
-                             <p className="font-semibold text-sm">{data.aging.drinkFrom} - {data.aging.drinkUntil}</p>
+                             <p className="font-semibold text-base">{data.aging.drinkFrom} - {data.aging.drinkUntil}</p>
                         </div>
                     </div>
                     <div>
                         <p className="text-[0.65rem] text-wine-300 uppercase tracking-widest mb-1">Peak Years</p>
-                        <p className="font-semibold text-sm text-gold-400">{data.aging.peakYears}</p>
+                        <p className="font-semibold text-base text-gold-400">{data.aging.peakYears}</p>
                     </div>
                     <div className="col-span-2 border-t border-white/10 pt-4">
                          <div className="flex justify-between items-end">
@@ -367,7 +367,7 @@ ${data.sources?.join('\n') || 'Gemini Knowledge Base'}
              
              {/* Origins / History */}
              <div className="relative mb-6">
-                <p className="text-sm text-stone-600 leading-relaxed italic font-serif">
+                <p className="text-base text-stone-700 leading-relaxed italic font-serif">
                   "{data.wineryInfo}"
                 </p>
              </div>
@@ -399,8 +399,8 @@ ${data.sources?.join('\n') || 'Gemini Knowledge Base'}
                       </div>
                       <ul className="space-y-2">
                         {data.funFacts.map((fact, i) => (
-                          <li key={i} className="text-sm text-stone-700 leading-snug flex items-start gap-2">
-                             <span className="text-gold-500 mt-1">•</span> {fact}
+                          <li key={i} className="text-base text-stone-700 leading-snug flex items-start gap-2">
+                             <span className="text-gold-500 mt-1.5 text-xs">●</span> {fact}
                           </li>
                         ))}
                       </ul>

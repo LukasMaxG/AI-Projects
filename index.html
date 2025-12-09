@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Sommelier AI</title>
     
-    <!-- Google Fonts: Playfair Display (Modern Serif) & Plus Jakarta Sans (Modern Geometric Sans) -->
+    <!-- Google Fonts: Playfair Display (Modern Serif) & Inter (Standard UI Sans) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -37,7 +37,7 @@
             },
             fontFamily: {
               serif: ['"Playfair Display"', 'Georgia', 'serif'],
-              sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+              sans: ['"Inter"', 'system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
             }
           }
         }
@@ -46,8 +46,11 @@
     <style>
       body {
         background-color: #fdf4f5;
-        color: #400e16;
-        font-family: "Plus Jakarta Sans", sans-serif;
+        color: #1f2937; /* Gray-800 for better general readability vs deep wine */
+        font-family: "Inter", sans-serif;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
       /* Hide scrollbar for clean mobile look but allow scroll */
       .no-scrollbar::-webkit-scrollbar {
