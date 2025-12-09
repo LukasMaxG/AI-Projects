@@ -1,6 +1,6 @@
 import React from 'react';
 import { WineData } from '../types';
-import { Download, MapPin, DollarSign, Award, Droplet, Info, TrendingUp, Calendar, Utensils, Thermometer, Box } from 'lucide-react';
+import { Download, MapPin, Award, Droplet, Info, TrendingUp, Calendar, Utensils, Thermometer, Box, Wine as WineIcon, Mountain, Leaf, Warehouse, Star } from 'lucide-react';
 import { VintageChart } from './VintageChart';
 
 interface WineDisplayProps {
@@ -26,6 +26,16 @@ Sub-Region: ${data.subRegion || 'N/A'}
 Varietals: ${data.varietals.join(', ')}
 ABV: ${data.abv}
 
+CRITIC SCORES
+-------------
+${data.criticScores?.map(c => `${c.critic}: ${c.score}`).join('\n') || 'N/A'}
+
+TERROIR & WINEMAKING
+--------------------
+Soil: ${data.terroir?.soil.join(', ') || 'N/A'}
+Oak: ${data.terroir?.oak || 'N/A'}
+Farming: ${data.terroir?.farming.join(', ') || 'N/A'}
+
 STYLE PROFILE
 -------------
 Body: ${data.styleProfile?.body || 'N/A'}
@@ -48,6 +58,7 @@ Est. Value (5yr): ${data.aging?.estimatedValue5Years}
 PAIRING & SERVICE
 -----------------
 Temp: ${data.pairing?.temperature}
+Glassware: ${data.pairing?.glassware}
 Decanting: ${data.pairing?.decanting}
 Foods: ${data.pairing?.foods.join(', ')}
 
@@ -94,10 +105,23 @@ ${data.sources?.join('\n') || 'Gemini Knowledge Base'}
         {/* Title Block */}
         <div className="text-center border-b border-wine-100 pb-8">
           <h2 className="text-3xl font-serif font-bold text-wine-950 leading-tight tracking-tight">{data.name}</h2>
-          <div className="flex items-center justify-center gap-2 mt-3 text-wine-700 font-medium text-sm tracking-wide uppercase opacity-80">
+          <div className="flex items-center justify-center gap-2 mt-3 text-wine-700 font-medium text-sm tracking-wide uppercase opacity-80 mb-4">
             <MapPin className="w-4 h-4" />
             <span>{data.region}, {data.country}</span>
           </div>
+
+          {/* Critic Scores Badge Row */}
+          {data.criticScores && data.criticScores.length > 0 && (
+            <div className="flex flex-wrap items-center justify-center gap-2 animate-fade-in">
+              {data.criticScores.map((c, i) => (
+                <div key={i} className="bg-wine-900 text-wine-50 px-3 py-1 rounded-full text-xs font-bold shadow-sm flex items-center gap-1.5 border border-wine-800">
+                   <Star className="w-3 h-3 text-gold-400 fill-gold-400" />
+                   <span className="opacity-90">{c.critic}</span>
+                   <span className="bg-white/20 px-1.5 rounded text-white">{c.score}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Identity & Origin Grid */}
@@ -132,6 +156,56 @@ ${data.sources?.join('\n') || 'Gemini Knowledge Base'}
             )}
            </div>
         </div>
+
+        {/* Terroir & Winemaking (New Section) */}
+        {data.terroir && (
+          <div>
+            <h3 className="flex items-center gap-2 text-lg font-serif font-bold text-wine-950 mb-4">
+              <Mountain className="w-5 h-5 text-wine-500" /> Terroir & Method
+            </h3>
+            <div className="bg-stone-50 border border-stone-200 rounded-2xl p-5 space-y-4">
+               {data.terroir.soil && data.terroir.soil.length > 0 && (
+                 <div className="flex items-start gap-3">
+                    <div className="bg-white p-2 rounded-full shadow-sm text-stone-600">
+                      <Mountain className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-stone-500 uppercase">Soil Composition</p>
+                      <p className="text-stone-800 text-sm font-medium">{data.terroir.soil.join(', ')}</p>
+                    </div>
+                 </div>
+               )}
+               {data.terroir.oak && (
+                 <div className="flex items-start gap-3">
+                    <div className="bg-white p-2 rounded-full shadow-sm text-stone-600">
+                      <Warehouse className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-stone-500 uppercase">Aging & Oak</p>
+                      <p className="text-stone-800 text-sm font-medium leading-snug">{data.terroir.oak}</p>
+                    </div>
+                 </div>
+               )}
+               {data.terroir.farming && data.terroir.farming.length > 0 && (
+                 <div className="flex items-start gap-3">
+                    <div className="bg-white p-2 rounded-full shadow-sm text-stone-600">
+                      <Leaf className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-stone-500 uppercase">Farming</p>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {data.terroir.farming.map((f, i) => (
+                          <span key={i} className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full border border-green-200">
+                            {f}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                 </div>
+               )}
+            </div>
+          </div>
+        )}
 
         {/* Vintage Analysis (Chart) */}
         {data.vintageComparison && data.vintageComparison.length > 0 && (
@@ -208,13 +282,30 @@ ${data.sources?.join('\n') || 'Gemini Knowledge Base'}
                     <Utensils className="w-5 h-5 text-wine-500" /> Pairing & Service
                 </h3>
                 <div className="grid grid-cols-1 gap-3">
-                    <div className="bg-white border border-wine-100 p-4 rounded-xl flex items-start gap-3">
-                        <Thermometer className="w-5 h-5 text-wine-400 mt-0.5" />
-                        <div>
-                             <p className="text-xs font-bold text-wine-900 uppercase">Service Temp</p>
-                             <p className="text-sm text-wine-700">{data.pairing.temperature} (Decant: {data.pairing.decanting})</p>
+                    <div className="grid grid-cols-2 gap-3">
+                         <div className="bg-white border border-wine-100 p-4 rounded-xl flex items-start gap-3">
+                            <Thermometer className="w-5 h-5 text-wine-400 mt-0.5" />
+                            <div>
+                                <p className="text-xs font-bold text-wine-900 uppercase">Temp</p>
+                                <p className="text-sm text-wine-700">{data.pairing.temperature}</p>
+                            </div>
+                        </div>
+                        <div className="bg-white border border-wine-100 p-4 rounded-xl flex items-start gap-3">
+                            <WineIcon className="w-5 h-5 text-wine-400 mt-0.5" />
+                            <div>
+                                <p className="text-xs font-bold text-wine-900 uppercase">Glassware</p>
+                                <p className="text-sm text-wine-700 leading-tight">{data.pairing.glassware}</p>
+                            </div>
                         </div>
                     </div>
+                    
+                    {data.pairing.decanting && (
+                        <div className="bg-white border border-wine-100 p-3 rounded-xl flex items-center gap-3 px-4">
+                             <div className="w-1.5 h-1.5 rounded-full bg-wine-300"></div>
+                             <p className="text-sm text-wine-800"><span className="font-bold">Decant:</span> {data.pairing.decanting}</p>
+                        </div>
+                    )}
+
                     <div className="bg-white border border-wine-100 p-4 rounded-xl">
                         <p className="text-xs font-bold text-wine-900 uppercase mb-2">Ideal Matches</p>
                         <div className="flex flex-wrap gap-2">

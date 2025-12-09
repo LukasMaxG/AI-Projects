@@ -16,12 +16,24 @@ export interface PairingData {
   foods: string[];
   temperature: string;
   decanting: string;
+  glassware: string; // e.g. "Bordeaux Glass"
 }
 
 export interface StyleProfile {
   body: string; // e.g., "Full-bodied"
   acidity: string;
   tannins: string;
+}
+
+export interface CriticScore {
+  critic: string; // e.g. "Robert Parker", "Wine Spectator"
+  score: string; // e.g. "95/100"
+}
+
+export interface TerroirData {
+  soil: string[]; // e.g. ["Limestone", "Clay"]
+  oak: string; // e.g. "18 months in French Oak"
+  farming: string[]; // e.g. ["Organic", "Biodynamic"]
 }
 
 export interface WineData {
@@ -45,6 +57,8 @@ export interface WineData {
   sources: string[];
   
   // New Enhanced Fields
+  criticScores: CriticScore[];
+  terroir: TerroirData;
   styleProfile: StyleProfile;
   vintageComparison: VintageScore[];
   aging: AgingData;

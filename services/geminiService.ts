@@ -11,9 +11,11 @@ You will receive either an image of a wine label or a text name of a wine.
 You must identify the wine and perform deep research using Google Search to find:
 1. Specifications (Grapes, ABV, Region).
 2. Sensory profile (Color, Nose, Taste, Structure).
-3. VINTAGE ANALYSIS: Compare the requested vintage score against 2-3 other recent or famous vintages of the same wine.
-4. INVESTMENT & AGING: Determine the drinking window, peak years, and estimate future value.
-5. SERVICE: Pairing, temperature, and decanting.
+3. CRITICAL RECEPTION: Find specific scores from major critics (Robert Parker, Wine Spectator, James Suckling, Vinous, etc.) for this vintage.
+4. TERROIR & VINIFICATION: Soil types, oak aging regimen, and farming practices (Organic, Biodynamic, etc.).
+5. VINTAGE ANALYSIS: Compare the requested vintage score against 2-3 other recent or famous vintages of the same wine.
+6. INVESTMENT & AGING: Determine the drinking window, peak years, and estimate future value.
+7. SERVICE: Pairing, temperature, decanting, and GLASSWARE recommendation.
 
 You must return the response in strict JSON format. 
 Do not wrap the JSON in markdown code blocks. Just return the raw JSON string.
@@ -37,6 +39,15 @@ The JSON object must match this structure exactly:
   "wineryInfo": "Concise winery history.",
   "awards": ["List", "of", "awards"],
   "funFacts": ["Fact 1", "Fact 2"],
+  "criticScores": [
+    { "critic": "Robert Parker", "score": "96" },
+    { "critic": "James Suckling", "score": "95" }
+  ],
+  "terroir": {
+    "soil": ["Soil Type 1", "Soil Type 2"],
+    "oak": "Oak aging details (e.g. 18 months in 50% new French Oak)",
+    "farming": ["Organic", "Sustainable", "Hand-harvested"]
+  },
   "styleProfile": {
     "body": "Light/Medium/Full",
     "acidity": "Low/Medium/High",
@@ -57,7 +68,8 @@ The JSON object must match this structure exactly:
   "pairing": {
     "foods": ["Dish 1", "Dish 2"],
     "temperature": "Serving temp (e.g. 16-18°C)",
-    "decanting": "Decanting advice (e.g. 30 mins)"
+    "decanting": "Decanting advice (e.g. 30 mins)",
+    "glassware": "Recommended glass shape (e.g. Bordeaux, Burgundy, Flute)"
   }
 }
 `;
@@ -100,7 +112,7 @@ export const analyzeWineLabel = async (base64Image: string, mimeType: string): P
             },
           },
           {
-            text: "Analyze this wine label. Provide a comprehensive sommelier report including vintage comparison, aging potential, and investment analysis."
+            text: "Analyze this wine label. Provide a comprehensive sommelier report including terroir, critic scores, vintage comparison, aging potential, and investment analysis."
           },
         ],
       },
@@ -125,7 +137,7 @@ export const searchWineByName = async (wineName: string): Promise<WineData> => {
       contents: {
         parts: [
           {
-            text: `Research the wine named "${wineName}". Provide a comprehensive sommelier report including vintage comparison, aging potential, and investment analysis.`
+            text: `Research the wine named "${wineName}". Provide a comprehensive sommelier report including terroir, critic scores, vintage comparison, aging potential, and investment analysis.`
           },
         ],
       },

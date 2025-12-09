@@ -49,3 +49,16 @@
 **Reasoning**:
 *   Reduces code duplication.
 *   Ensures the UI component (`WineDisplay`) works identically regardless of how the user initiated the search.
+
+### 7. Zero-Dependency Visualization
+**Decision**: We implemented the `VintageChart` using raw **SVG** and React state, rather than installing a charting library (like Recharts or Chart.js).
+**Reasoning**:
+*   **Performance**: Keeps the bundle size extremely small (saving ~30-100kb).
+*   **Control**: Allows for pixel-perfect custom styling (gradients, glowing lines) that matches the app's premium aesthetic exactly.
+*   **Simplicity**: We only need one specific type of chart (Area/Line), making a full library overkill.
+
+### 8. Deep-Dive Data Modeling
+**Decision**: The `WineData` type uses nested objects (e.g., `TerroirData`, `CriticScore[]`) rather than long text description strings.
+**Reasoning**:
+*   **UI Flexibility**: Allows us to render specific data points as "badges" (e.g., "Organic" tag) or icons (Soil types) rather than just dumping a paragraph of text.
+*   **AI Instruction**: Forcing the AI to fill these specific buckets ensures it actually performs the research for each specific aspect (Soil, Oak, Critics).
