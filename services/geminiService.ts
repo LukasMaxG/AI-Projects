@@ -4,40 +4,66 @@ import { WineData } from "../types";
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const SYSTEM_INSTRUCTION = `
-You are an expert Master Sommelier and Wine Researcher. 
-Your task is to provide a detailed report on a specific wine.
+You are an expert Master Sommelier and Wine Investment Analyst.
+Your task is to provide a detailed, deep-dive report on a specific wine.
 You will receive either an image of a wine label or a text name of a wine.
-You must identify the wine and then search the web for specific details including current market price, ratings, and winery history.
-Use sources like winelibrary.com, wine encyclopedia, winespectator.com, etc.
+
+You must identify the wine and perform deep research using Google Search to find:
+1. Specifications (Grapes, ABV, Region).
+2. Sensory profile (Color, Nose, Taste, Structure).
+3. VINTAGE ANALYSIS: Compare the requested vintage score against 2-3 other recent or famous vintages of the same wine.
+4. INVESTMENT & AGING: Determine the drinking window, peak years, and estimate future value.
+5. SERVICE: Pairing, temperature, and decanting.
 
 You must return the response in strict JSON format. 
-Do not wrap the JSON in markdown code blocks like \`\`\`json ... \`\`\`. Just return the raw JSON string.
+Do not wrap the JSON in markdown code blocks. Just return the raw JSON string.
 
-The JSON object must match this structure:
+The JSON object must match this structure exactly:
 {
   "name": "Full Wine Name",
   "vintage": "Year or NV",
   "country": "Country of origin",
   "region": "Region",
-  "subRegion": "Sub-region or Appellation (if applicable)",
+  "subRegion": "Sub-region or Appellation",
   "varietals": ["List", "of", "Grapes"],
   "type": "Red, White, Rose, Sparkling, etc.",
-  "abv": "Alcohol By Volume (approximate if exact not found)",
-  "color": "Visual description of color",
-  "nose": "Aromatic profile description",
-  "taste": "Palate and flavor profile description",
+  "abv": "Alcohol By Volume",
+  "color": "Visual description",
+  "nose": "Aromatic profile",
+  "taste": "Palate profile",
   "closure": "Cork, Screwcap, etc.",
-  "size": "Bottle size (usually 750ml)",
-  "marketPrice": "Current average market price range (e.g. $25 - $35)",
-  "wineryInfo": "A concise paragraph about the winery/chateau history.",
-  "awards": ["List", "of", "major", "points", "or", "awards"],
-  "funFacts": ["Famous years", "Interesting history facts", "Pairing suggestions"]
+  "size": "Bottle size",
+  "marketPrice": "Current market price range (e.g. $25 - $35)",
+  "wineryInfo": "Concise winery history.",
+  "awards": ["List", "of", "awards"],
+  "funFacts": ["Fact 1", "Fact 2"],
+  "styleProfile": {
+    "body": "Light/Medium/Full",
+    "acidity": "Low/Medium/High",
+    "tannins": "Low/Medium/High/Silky/etc"
+  },
+  "vintageComparison": [
+    { "year": "2018", "score": 95, "notes": "Excellent" },
+    { "year": "2019", "score": 92, "notes": "Average" }
+    // Include the requested vintage + 2 others
+  ],
+  "aging": {
+    "drinkFrom": "YYYY",
+    "drinkUntil": "YYYY",
+    "peakYears": "YYYY-YYYY",
+    "investmentPotential": "High/Medium/Low",
+    "estimatedValue5Years": "Projected price in 5 years"
+  },
+  "pairing": {
+    "foods": ["Dish 1", "Dish 2"],
+    "temperature": "Serving temp (e.g. 16-18°C)",
+    "decanting": "Decanting advice (e.g. 30 mins)"
+  }
 }
 `;
 
 const parseResponse = (text: string, groundingMetadata: any): WineData => {
   let jsonString = text || "";
-  // Cleanup if the model accidentally adds markdown
   jsonString = jsonString.replace(/^```json\s*/, '').replace(/\s*```$/, '');
 
   try {
@@ -74,7 +100,7 @@ export const analyzeWineLabel = async (base64Image: string, mimeType: string): P
             },
           },
           {
-            text: "Analyze this wine label. Identify the wine, then find detailed specifications, tasting notes, current market price, and winery history using Google Search."
+            text: "Analyze this wine label. Provide a comprehensive sommelier report including vintage comparison, aging potential, and investment analysis."
           },
         ],
       },
@@ -99,7 +125,7 @@ export const searchWineByName = async (wineName: string): Promise<WineData> => {
       contents: {
         parts: [
           {
-            text: `Research the wine named "${wineName}". Find detailed specifications, tasting notes, current market price, and winery history using Google Search. Return the data in the specified JSON format.`
+            text: `Research the wine named "${wineName}". Provide a comprehensive sommelier report including vintage comparison, aging potential, and investment analysis.`
           },
         ],
       },

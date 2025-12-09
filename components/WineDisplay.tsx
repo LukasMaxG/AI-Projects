@@ -1,6 +1,7 @@
 import React from 'react';
 import { WineData } from '../types';
-import { Download, MapPin, DollarSign, Award, Droplet, Info } from 'lucide-react';
+import { Download, MapPin, DollarSign, Award, Droplet, Info, TrendingUp, Calendar, Utensils, Thermometer, Box } from 'lucide-react';
+import { VintageChart } from './VintageChart';
 
 interface WineDisplayProps {
   data: WineData;
@@ -24,8 +25,12 @@ Region: ${data.region}
 Sub-Region: ${data.subRegion || 'N/A'}
 Varietals: ${data.varietals.join(', ')}
 ABV: ${data.abv}
-Size: ${data.size}
-Closure: ${data.closure}
+
+STYLE PROFILE
+-------------
+Body: ${data.styleProfile?.body || 'N/A'}
+Acidity: ${data.styleProfile?.acidity || 'N/A'}
+Tannins: ${data.styleProfile?.tannins || 'N/A'}
 
 TASTING NOTES
 -------------
@@ -33,21 +38,26 @@ Color: ${data.color}
 Nose: ${data.nose}
 Taste: ${data.taste}
 
+AGING & INVESTMENT
+------------------
+Drink Window: ${data.aging?.drinkFrom} - ${data.aging?.drinkUntil}
+Peak Years: ${data.aging?.peakYears}
+Investment Grade: ${data.aging?.investmentPotential}
+Est. Value (5yr): ${data.aging?.estimatedValue5Years}
+
+PAIRING & SERVICE
+-----------------
+Temp: ${data.pairing?.temperature}
+Decanting: ${data.pairing?.decanting}
+Foods: ${data.pairing?.foods.join(', ')}
+
 MARKET
 ------
-Estimated Price: ${data.marketPrice}
+Current Price: ${data.marketPrice}
 
 WINERY
 ------
 ${data.wineryInfo}
-
-AWARDS & RECOGNITION
---------------------
-${data.awards.map(a => `- ${a}`).join('\n')}
-
-DID YOU KNOW?
--------------
-${data.funFacts.map(f => `- ${f}`).join('\n')}
 
 SOURCES
 -------
@@ -58,7 +68,7 @@ ${data.sources?.join('\n') || 'Gemini Knowledge Base'}
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${data.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_AllAboutWine.txt`;
+    link.download = `${data.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_Report.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -79,7 +89,7 @@ ${data.sources?.join('\n') || 'Gemini Knowledge Base'}
       </div>
 
       {/* Main Content */}
-      <div className="p-8 space-y-8">
+      <div className="p-8 space-y-10">
         
         {/* Title Block */}
         <div className="text-center border-b border-wine-100 pb-8">
@@ -90,35 +100,57 @@ ${data.sources?.join('\n') || 'Gemini Knowledge Base'}
           </div>
         </div>
 
-        {/* Quick Stats Grid */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-wine-50/80 p-4 rounded-2xl border border-wine-100/50">
-            <p className="text-[0.65rem] text-wine-400 uppercase tracking-wider font-bold mb-1">Type</p>
-            <p className="font-semibold text-wine-900">{data.type}</p>
-          </div>
-          <div className="bg-wine-50/80 p-4 rounded-2xl border border-wine-100/50">
-            <p className="text-[0.65rem] text-wine-400 uppercase tracking-wider font-bold mb-1">Price Est.</p>
-            <div className="flex items-center gap-1 text-wine-900 font-semibold">
-              <DollarSign className="w-4 h-4 text-wine-500" />
-              {data.marketPrice}
+        {/* Identity & Origin Grid */}
+        <div>
+           <h3 className="text-xs font-bold text-wine-400 uppercase tracking-widest mb-4">Identity & Origin</h3>
+           <div className="grid grid-cols-2 gap-4">
+            <div className="bg-wine-50/80 p-4 rounded-2xl border border-wine-100/50">
+              <p className="text-[0.65rem] text-wine-400 uppercase tracking-wider font-bold mb-1">Grapes</p>
+              <div className="flex flex-wrap gap-1">
+                 {data.varietals.map((v, i) => (
+                    <span key={i} className="text-xs font-semibold text-wine-900 bg-white/50 px-1.5 py-0.5 rounded-md">{v}</span>
+                 ))}
+              </div>
             </div>
-          </div>
-          <div className="bg-wine-50/80 p-4 rounded-2xl border border-wine-100/50">
-            <p className="text-[0.65rem] text-wine-400 uppercase tracking-wider font-bold mb-1">Varietal</p>
-            <p className="font-semibold text-wine-900 truncate">{data.varietals[0]}</p>
-          </div>
-          <div className="bg-wine-50/80 p-4 rounded-2xl border border-wine-100/50">
-            <p className="text-[0.65rem] text-wine-400 uppercase tracking-wider font-bold mb-1">ABV</p>
-            <p className="font-semibold text-wine-900">{data.abv}</p>
-          </div>
+            <div className="bg-wine-50/80 p-4 rounded-2xl border border-wine-100/50">
+              <p className="text-[0.65rem] text-wine-400 uppercase tracking-wider font-bold mb-1">Alcohol</p>
+              <p className="font-semibold text-wine-900">{data.abv}</p>
+            </div>
+            {data.styleProfile && (
+                <>
+                <div className="bg-wine-50/80 p-4 rounded-2xl border border-wine-100/50">
+                  <p className="text-[0.65rem] text-wine-400 uppercase tracking-wider font-bold mb-1">Body</p>
+                  <p className="font-semibold text-wine-900">{data.styleProfile.body}</p>
+                </div>
+                 <div className="bg-wine-50/80 p-4 rounded-2xl border border-wine-100/50">
+                  <p className="text-[0.65rem] text-wine-400 uppercase tracking-wider font-bold mb-1">Structure</p>
+                  <p className="text-xs font-semibold text-wine-900">
+                    Tannins: {data.styleProfile.tannins}
+                  </p>
+                </div>
+                </>
+            )}
+           </div>
         </div>
+
+        {/* Vintage Analysis (Chart) */}
+        {data.vintageComparison && data.vintageComparison.length > 0 && (
+          <div>
+             <h3 className="flex items-center gap-2 text-lg font-serif font-bold text-wine-950 mb-4">
+                <TrendingUp className="w-5 h-5 text-wine-500" /> Vintage Quality
+             </h3>
+             <div className="bg-white border border-wine-100 rounded-2xl p-4 shadow-sm">
+                <VintageChart data={data.vintageComparison} currentVintage={data.vintage} />
+             </div>
+          </div>
+        )}
 
         {/* Tasting Notes */}
         <div>
-          <h3 className="flex items-center gap-2 text-xl font-serif font-bold text-wine-950 mb-4">
+          <h3 className="flex items-center gap-2 text-lg font-serif font-bold text-wine-950 mb-4">
             <Droplet className="w-5 h-5 text-wine-500" /> Tasting Profile
           </h3>
-          <div className="space-y-4 text-sm text-gray-600 leading-relaxed bg-white p-1 rounded-xl">
+          <div className="space-y-4 text-sm text-gray-600 leading-relaxed bg-wine-50/30 p-4 rounded-2xl border border-wine-100/50">
             <div className="flex gap-3">
                <span className="font-bold text-wine-800 w-16 shrink-0 uppercase text-xs tracking-wide pt-1">Eye</span>
                <span>{data.color}</span>
@@ -134,33 +166,79 @@ ${data.sources?.join('\n') || 'Gemini Knowledge Base'}
           </div>
         </div>
 
+        {/* Cellaring & Investment */}
+        {data.aging && (
+            <div className="bg-gradient-to-br from-gray-900 to-wine-950 text-wine-50 rounded-2xl p-6 shadow-lg relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-wine-800 rounded-full blur-3xl opacity-20 translate-x-10 -translate-y-10"></div>
+                <h3 className="flex items-center gap-2 text-lg font-serif font-bold text-gold-400 mb-4 relative z-10">
+                    <Box className="w-5 h-5" /> Cellar & Investment
+                </h3>
+                <div className="grid grid-cols-2 gap-y-6 gap-x-4 relative z-10">
+                    <div>
+                        <p className="text-[0.65rem] text-wine-300 uppercase tracking-widest mb-1">Drink Window</p>
+                        <div className="flex items-center gap-2">
+                             <Calendar className="w-4 h-4 text-wine-400" />
+                             <p className="font-semibold text-sm">{data.aging.drinkFrom} - {data.aging.drinkUntil}</p>
+                        </div>
+                    </div>
+                    <div>
+                        <p className="text-[0.65rem] text-wine-300 uppercase tracking-widest mb-1">Peak Years</p>
+                        <p className="font-semibold text-sm text-gold-400">{data.aging.peakYears}</p>
+                    </div>
+                    <div className="col-span-2 border-t border-white/10 pt-4">
+                         <div className="flex justify-between items-end">
+                            <div>
+                                <p className="text-[0.65rem] text-wine-300 uppercase tracking-widest mb-1">Current Price</p>
+                                <p className="font-serif text-xl">{data.marketPrice}</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-[0.65rem] text-wine-300 uppercase tracking-widest mb-1">Est. Value (5yr)</p>
+                                <p className="font-serif text-xl text-green-400">{data.aging.estimatedValue5Years}</p>
+                            </div>
+                         </div>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {/* Pairing & Service */}
+        {data.pairing && (
+            <div>
+                <h3 className="flex items-center gap-2 text-lg font-serif font-bold text-wine-950 mb-4">
+                    <Utensils className="w-5 h-5 text-wine-500" /> Pairing & Service
+                </h3>
+                <div className="grid grid-cols-1 gap-3">
+                    <div className="bg-white border border-wine-100 p-4 rounded-xl flex items-start gap-3">
+                        <Thermometer className="w-5 h-5 text-wine-400 mt-0.5" />
+                        <div>
+                             <p className="text-xs font-bold text-wine-900 uppercase">Service Temp</p>
+                             <p className="text-sm text-wine-700">{data.pairing.temperature} (Decant: {data.pairing.decanting})</p>
+                        </div>
+                    </div>
+                    <div className="bg-white border border-wine-100 p-4 rounded-xl">
+                        <p className="text-xs font-bold text-wine-900 uppercase mb-2">Ideal Matches</p>
+                        <div className="flex flex-wrap gap-2">
+                            {data.pairing.foods.map((food, i) => (
+                                <span key={i} className="text-sm bg-wine-50 text-wine-800 px-3 py-1 rounded-full border border-wine-100">
+                                    {food}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+
         {/* Winery Info */}
         <div className="bg-stone-50 p-6 rounded-2xl border border-stone-200/60 relative overflow-hidden">
            <div className="absolute top-0 right-0 w-24 h-24 bg-stone-100 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
-           <h3 className="relative flex items-center gap-2 text-xl font-serif font-bold text-stone-800 mb-3">
+           <h3 className="relative flex items-center gap-2 text-lg font-serif font-bold text-stone-800 mb-3">
             <Info className="w-5 h-5 text-stone-500" /> The Winery
           </h3>
           <p className="relative text-sm text-stone-600 leading-relaxed italic font-serif">
             "{data.wineryInfo}"
           </p>
         </div>
-
-        {/* Awards */}
-        {data.awards.length > 0 && (
-          <div>
-            <h3 className="flex items-center gap-2 text-xl font-serif font-bold text-wine-950 mb-4">
-              <Award className="w-5 h-5 text-gold-500" /> Accolades
-            </h3>
-            <ul className="grid grid-cols-1 gap-3">
-              {data.awards.map((award, i) => (
-                <li key={i} className="flex items-start gap-3 text-sm text-gray-700 bg-wine-50/50 p-3 rounded-xl border border-wine-100/30">
-                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-gold-500 shrink-0 shadow-sm"></span>
-                  {award}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
 
         {/* Action Area */}
         <button 

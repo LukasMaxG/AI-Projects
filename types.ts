@@ -1,3 +1,29 @@
+export interface VintageScore {
+  year: string;
+  score: number; // 0-100
+  notes: string;
+}
+
+export interface AgingData {
+  drinkFrom: string;
+  drinkUntil: string;
+  peakYears: string;
+  investmentPotential: string; // "High", "Medium", "Low"
+  estimatedValue5Years: string;
+}
+
+export interface PairingData {
+  foods: string[];
+  temperature: string;
+  decanting: string;
+}
+
+export interface StyleProfile {
+  body: string; // e.g., "Full-bodied"
+  acidity: string;
+  tannins: string;
+}
+
 export interface WineData {
   name: string;
   vintage: string;
@@ -15,8 +41,14 @@ export interface WineData {
   marketPrice: string;
   wineryInfo: string;
   awards: string[];
-  funFacts: string[]; // Famous years, history
+  funFacts: string[]; 
   sources: string[];
+  
+  // New Enhanced Fields
+  styleProfile: StyleProfile;
+  vintageComparison: VintageScore[];
+  aging: AgingData;
+  pairing: PairingData;
 }
 
 export interface AnalysisState {
