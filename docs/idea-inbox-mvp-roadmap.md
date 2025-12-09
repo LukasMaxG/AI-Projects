@@ -19,6 +19,8 @@ The application has achieved "Master Sommelier" level depth, offering technical 
     *   **Vintage Comparison**: Custom SVG Area Chart visualizing quality trends over time.
     *   **Investment Data**: Drinking windows, peak maturity years, and value projections.
     *   **Service**: Specific glassware recommendations (e.g., Bordeaux vs. Burgundy glass), decanting times, and temperature.
+    *   **Winery History & Origins**: Deep dive into the estate's background and "Legendary Years" (Best Vintages).
+    *   **Trivia**: "Did you know?" facts about the wine.
 4.  **Real-time Research**: Uses `googleSearch` tool for live market prices.
 5.  **Data Export**: Download textual reports.
 

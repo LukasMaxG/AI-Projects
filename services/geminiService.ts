@@ -16,6 +16,8 @@ You must identify the wine and perform deep research using Google Search to find
 5. VINTAGE ANALYSIS: Compare the requested vintage score against 2-3 other recent or famous vintages of the same wine.
 6. INVESTMENT & AGING: Determine the drinking window, peak years, and estimate future value.
 7. SERVICE: Pairing, temperature, decanting, and GLASSWARE recommendation.
+8. ONLINE PRESENCE: Find the official winery website and a direct URL to an image of the bottle or winery logo.
+9. HERITAGE & TRIVIA: Research the winery's origins/history, identifying the "Best Vintages" (legendary years) for this wine, and any interesting fun facts.
 
 You must return the response in strict JSON format. 
 Do not wrap the JSON in markdown code blocks. Just return the raw JSON string.
@@ -36,9 +38,12 @@ The JSON object must match this structure exactly:
   "closure": "Cork, Screwcap, etc.",
   "size": "Bottle size",
   "marketPrice": "Current market price range (e.g. $25 - $35)",
-  "wineryInfo": "Concise winery history.",
+  "wineryInfo": "Origins and history of the winery.",
+  "websiteUrl": "https://www.example-winery.com",
+  "onlineImage": "https://example.com/bottle-shot.jpg",
   "awards": ["List", "of", "awards"],
-  "funFacts": ["Fact 1", "Fact 2"],
+  "funFacts": ["Interesting fact 1", "Interesting fact 2"],
+  "bestVintages": ["2010", "2015", "2016"],
   "criticScores": [
     { "critic": "Robert Parker", "score": "96" },
     { "critic": "James Suckling", "score": "95" }
@@ -112,7 +117,7 @@ export const analyzeWineLabel = async (base64Image: string, mimeType: string): P
             },
           },
           {
-            text: "Analyze this wine label. Provide a comprehensive sommelier report including terroir, critic scores, vintage comparison, aging potential, and investment analysis."
+            text: "Analyze this wine label. Provide a comprehensive sommelier report including terroir, critic scores, vintage comparison, aging potential, investment analysis, winery origins, best vintages, and fun facts."
           },
         ],
       },
@@ -137,7 +142,7 @@ export const searchWineByName = async (wineName: string): Promise<WineData> => {
       contents: {
         parts: [
           {
-            text: `Research the wine named "${wineName}". Provide a comprehensive sommelier report including terroir, critic scores, vintage comparison, aging potential, and investment analysis.`
+            text: `Research the wine named "${wineName}". Provide a comprehensive sommelier report including terroir, critic scores, vintage comparison, aging potential, investment analysis, winery origins, best vintages, and fun facts.`
           },
         ],
       },

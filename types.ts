@@ -52,8 +52,11 @@ export interface WineData {
   size: string; // 750ml, etc.
   marketPrice: string;
   wineryInfo: string;
+  websiteUrl?: string; // New: Official Website
+  onlineImage?: string; // New: AI found image URL
   awards: string[];
   funFacts: string[]; 
+  bestVintages?: string[]; // New: List of best years
   sources: string[];
   
   // New Enhanced Fields
