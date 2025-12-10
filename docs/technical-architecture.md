@@ -58,14 +58,14 @@
 *   **Simplicity**: We only need one specific type of chart (Area/Line), making a full library overkill.
 
 ### 8. Deep-Dive Data Modeling
-**Decision**: The `WineData` type uses nested objects (e.g., `TerroirData`, `CriticScore[]`) rather than long text description strings.
+**Decision**: The `WineData` type uses nested objects (e.g., `TerroirData`, `CriticScore[]`, `LegendaryVintage[]`) rather than long text description strings.
 **Reasoning**:
-*   **UI Flexibility**: Allows us to render specific data points as "badges" (e.g., "Organic" tag) or icons (Soil types) rather than just dumping a paragraph of text.
+*   **UI Flexibility**: Allows us to render specific data points as "badges" (e.g., "Organic" tag), icons (Soil types), or Cards (Vintage Awards) rather than just dumping a paragraph of text.
 *   **AI Instruction**: Forcing the AI to fill these specific buckets ensures it actually performs the research for each specific aspect (Soil, Oak, Critics).
+*   **Backward Compatibility**: The code includes checks (e.g., `typeof v === 'string'`) to gracefully handle older history items stored before the data model was upgraded.
 
-### 9. Hierarchical Media Resolution
-**Decision**: The UI implements a specific priority chain for the hero image: User Upload > AI-Discovered URL > Fallback Stock Photo.
+### 9. Multi-Source Heuristic Image Search
+**Decision**: Instead of asking for a single image URL, we instruct the AI to generate a list of 8-10 "Candidate URLs" from specific high-probability sources (WineLibrary, Total Wine, Wikipedia, etc.). The UI then cycles through these candidates if one fails.
 **Reasoning**:
-*   **Truth**: Prioritizes the physical reality (what the user is holding).
-*   **Continuity**: Falls back to a digital representation (if text search was used or scan failed).
-*   **Aesthetics**: Ensures the UI never looks broken (no empty image boxes).
+*   **Reliability**: Hotlinking protection and 404s are common with web images. A single source has a high failure rate.
+*   **Redundancy**: By providing a prioritized list (Bottle > Label > Winery), we ensure the user almost always sees *something* relevant before falling back to a stock photo.

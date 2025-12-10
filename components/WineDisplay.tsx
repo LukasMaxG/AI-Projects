@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { WineData } from '../types';
-import { Download, MapPin, Droplet, TrendingUp, Calendar, Utensils, Thermometer, Box, Wine as WineIcon, Mountain, Leaf, Warehouse, Star, ExternalLink, Lightbulb, Clock, BookOpen, ChevronDown, ChevronUp, Activity } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { WineData, LegendaryVintage } from '../types';
+import { Download, MapPin, Droplet, TrendingUp, Utensils, Thermometer, Wine as WineIcon, Mountain, ExternalLink, Lightbulb, Clock, BookOpen, ChevronDown, ChevronUp, Activity, Copy, Check, Award } from 'lucide-react';
 import { VintageChart } from './VintageChart';
 
 interface WineDisplayProps {
@@ -10,26 +10,25 @@ interface WineDisplayProps {
 
 // Helper Component: Progress Bar for Style Profile
 const StyleMeter = ({ label, value }: { label: string; value: string }) => {
-  // Simple heuristic to map text to percentage
   const getPercentage = (val: string) => {
     const v = val.toLowerCase();
     if (v.includes('high') || v.includes('full') || v.includes('intense')) return 95;
     if (v.includes('medium-plus') || v.includes('med+')) return 75;
     if (v.includes('medium') || v.includes('moderate')) return 50;
     if (v.includes('low') || v.includes('light')) return 25;
-    if (v.includes('silky') || v.includes('smooth')) return 60; // Contextual mapping
-    return 50; // Default
+    if (v.includes('silky') || v.includes('smooth')) return 60;
+    return 50;
   };
 
   const pct = getPercentage(value);
 
   return (
-    <div className="mb-3">
-      <div className="flex justify-between items-end mb-1">
-        <span className="text-[0.65rem] uppercase tracking-widest font-bold text-wine-400">{label}</span>
-        <span className="text-xs font-semibold text-wine-900">{value}</span>
+    <div className="mb-4">
+      <div className="flex justify-between items-end mb-1.5">
+        <span className="text-[10px] uppercase tracking-widest font-bold text-stone-400">{label}</span>
+        <span className="text-xs font-bold text-wine-900">{value}</span>
       </div>
-      <div className="h-1.5 w-full bg-wine-100 rounded-full overflow-hidden">
+      <div className="h-1.5 w-full bg-stone-100 rounded-full overflow-hidden">
         <div 
           className="h-full bg-gradient-to-r from-wine-400 to-wine-600 rounded-full transition-all duration-1000" 
           style={{ width: `${pct}%` }}
@@ -39,7 +38,6 @@ const StyleMeter = ({ label, value }: { label: string; value: string }) => {
   );
 };
 
-// Helper Component: Collapsible Section
 const CollapsibleSection = ({ 
   title, 
   icon: Icon, 
@@ -54,25 +52,27 @@ const CollapsibleSection = ({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="bg-white border border-wine-100 rounded-2xl overflow-hidden shadow-sm transition-all duration-300">
+    <div className="bg-white border border-stone-100 rounded-2xl overflow-hidden shadow-sm transition-all duration-300">
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-4 bg-white hover:bg-wine-50/50 transition-colors"
+        className="w-full flex items-center justify-between p-5 bg-white hover:bg-stone-50 transition-colors group"
       >
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-wine-50 rounded-lg text-wine-600">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-wine-50 rounded-lg text-wine-600 group-hover:bg-wine-100 transition-colors">
             <Icon className="w-4 h-4" />
           </div>
-          <span className="font-serif font-bold text-wine-900">{title}</span>
+          <span className="font-serif font-bold text-wine-900 tracking-tight text-lg">{title}</span>
         </div>
-        {isOpen ? <ChevronUp className="w-4 h-4 text-wine-400" /> : <ChevronDown className="w-4 h-4 text-wine-400" />}
+        {isOpen ? <ChevronUp className="w-4 h-4 text-stone-400" /> : <ChevronDown className="w-4 h-4 text-stone-400" />}
       </button>
       
       <div 
-        className={`transition-[max-height,opacity] duration-300 ease-in-out ${isOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}
+        className={`transition-[max-height,opacity] duration-300 ease-in-out ${isOpen ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'}`}
       >
-        <div className="p-4 pt-0 border-t border-wine-50">
-          {children}
+        <div className="p-5 pt-0 border-t border-dashed border-stone-100">
+          <div className="pt-4">
+            {children}
+          </div>
         </div>
       </div>
     </div>
@@ -80,17 +80,59 @@ const CollapsibleSection = ({
 };
 
 export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview }) => {
+  const [copied, setCopied] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [usingFallback, setUsingFallback] = useState(false);
+
+  // Reset state when data changes (new search)
+  useEffect(() => {
+    setCurrentImageIndex(0);
+    setUsingFallback(false);
+  }, [data]);
   
-  const displayImage = imagePreview || data.onlineImage || 'https://images.unsplash.com/photo-1559563362-c667ba5f5480?auto=format&fit=crop&q=80&w=600';
+  const fallbackImage = 'https://images.unsplash.com/photo-1559563362-c667ba5f5480?auto=format&fit=crop&q=80&w=600';
   
+  // Logic: 
+  // 1. User Scan Preview (if available)
+  // 2. AI Candidates (cycling through index)
+  // 3. Fallback
+  const getDisplayImage = () => {
+    if (imagePreview) return imagePreview;
+    if (usingFallback) return fallbackImage;
+    
+    const candidates = data.imageCandidates || (data.onlineImage ? [data.onlineImage] : []);
+    if (candidates.length > 0 && currentImageIndex < candidates.length) {
+      return candidates[currentImageIndex];
+    }
+    return fallbackImage;
+  };
+
+  const handleImageError = () => {
+    const candidates = data.imageCandidates || (data.onlineImage ? [data.onlineImage] : []);
+    if (currentImageIndex < candidates.length - 1) {
+      // Try next candidate
+      setCurrentImageIndex(prev => prev + 1);
+    } else {
+      // All failed, use fallback
+      setUsingFallback(true);
+    }
+  };
+  
+  const displayImage = getDisplayImage();
+  
+  // Google Maps Link
+  const mapQuery = encodeURIComponent(`${data.region}, ${data.country}`);
+  const mapUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
+
   const WebsiteWrapper = ({ children }: { children: React.ReactNode }) => {
     if (data.websiteUrl) {
       return (
         <a href={data.websiteUrl} target="_blank" rel="noopener noreferrer" className="group relative block cursor-pointer">
           {children}
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 rounded-xl">
-             <div className="bg-white/90 px-3 py-1.5 rounded-full shadow-lg flex items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-all">
+             <div className="bg-white/95 px-3 py-1.5 rounded-full shadow-lg flex items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-all backdrop-blur-sm">
                 <ExternalLink className="w-3 h-3 text-wine-900" />
+                <span className="text-xs font-bold text-wine-900">Visit Winery</span>
              </div>
           </div>
         </a>
@@ -99,8 +141,38 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview }) 
     return <div className="relative">{children}</div>;
   };
 
+  const copyForDocs = () => {
+    const htmlContent = `
+      <h1 style="font-family: Georgia, serif; color: #74212e;">${data.name}</h1>
+      <p><strong>Vintage:</strong> ${data.vintage} | <strong>Region:</strong> ${data.region}, ${data.country}</p>
+      <hr />
+      <h3>Analysis</h3>
+      <ul>
+        <li><strong>Market Price:</strong> ${data.marketPrice}</li>
+        <li><strong>Critic Score:</strong> ${data.criticScores?.[0]?.score || 'N/A'}</li>
+        <li><strong>Drinking Window:</strong> ${data.aging?.drinkFrom} - ${data.aging?.drinkUntil}</li>
+      </ul>
+      <h3>Tasting Notes</h3>
+      <p><strong>Nose:</strong> ${data.nose}</p>
+      <p><strong>Taste:</strong> ${data.taste}</p>
+      <hr />
+      <h3>Winery Info</h3>
+      <p>${data.wineryInfo}</p>
+      <p><em>Generated by Sommelier AI</em></p>
+    `;
+
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const clipboardItem = new ClipboardItem({ 'text/html': blob });
+    
+    navigator.clipboard.write([clipboardItem]).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    }).catch(err => {
+        console.error('Failed to copy', err);
+    });
+  };
+
   const downloadInfo = () => {
-    // ... (Existing download logic, kept brief for this file update but would normally be here)
      const content = `WINE REPORT: ${data.name}\nGenerated by Sommelier AI\n\nVintage: ${data.vintage}\nDetails: ${data.varietals.join(', ')} - ${data.region}\n\nNotes:\n${data.nose}\n${data.taste}\n\nAnalysis:\nPrice: ${data.marketPrice}\nScore: ${data.criticScores?.[0]?.score || 'N/A'}`;
      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
      const link = document.createElement('a');
@@ -110,27 +182,34 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview }) 
   };
 
   return (
-    <div className="pb-20 space-y-6">
+    <div className="pb-24 space-y-6">
       
       {/* ZONE 1: SNAPSHOT (Header) */}
       <div className="bg-white rounded-[2.5rem] p-6 shadow-xl border border-wine-100/50 relative overflow-hidden mx-4">
         {/* Decorative BG */}
         <div className="absolute -top-10 -right-10 w-40 h-40 bg-wine-50 rounded-full blur-3xl"></div>
 
-        <div className="relative z-10 flex gap-5">
+        <div className="relative z-10 flex gap-6">
             {/* Left: Image */}
             <div className="w-1/3 shrink-0">
                <WebsiteWrapper>
-                  <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-white border border-wine-50 shadow-inner relative">
+                  <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-white border border-stone-100 shadow-inner relative flex items-center justify-center group">
                     <img 
                       src={displayImage} 
-                      className="w-full h-full object-contain p-2 mix-blend-multiply" 
+                      onError={handleImageError}
+                      className="w-full h-full object-cover mix-blend-multiply" 
                       alt={data.name} 
                     />
                     {data.vintage && (
-                        <div className="absolute bottom-0 inset-x-0 bg-wine-900/90 text-white text-center text-xs font-bold py-1 backdrop-blur-sm">
+                        <div className="absolute bottom-0 inset-x-0 bg-wine-900/90 text-white text-center text-xs font-bold py-1.5 backdrop-blur-sm tracking-wide">
                             {data.vintage}
                         </div>
+                    )}
+                    {/* Image Source Indicator (Debug/Info) */}
+                    {!imagePreview && !usingFallback && (
+                       <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="w-2 h-2 bg-emerald-400 rounded-full shadow-sm ring-1 ring-white" title="Live Web Image"></div>
+                       </div>
                     )}
                   </div>
                </WebsiteWrapper>
@@ -138,40 +217,45 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview }) 
 
             {/* Right: Info */}
             <div className="flex-1 flex flex-col justify-center">
-                <div className="flex items-center gap-1.5 text-wine-600 text-xs font-bold uppercase tracking-wider mb-2">
+                <a 
+                   href={mapUrl}
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   className="flex items-center gap-1.5 text-wine-600 hover:text-wine-800 text-[10px] font-bold uppercase tracking-widest mb-3 cursor-pointer transition-colors"
+                >
                     <MapPin className="w-3 h-3" />
-                    <span className="line-clamp-1">{data.country}</span>
-                </div>
-                <h2 className="text-2xl font-serif font-bold text-wine-950 leading-tight mb-3">
+                    <span className="line-clamp-1 underline decoration-dotted underline-offset-2">{data.country}</span>
+                </a>
+                <h2 className="text-3xl font-serif font-bold text-wine-950 leading-[1.1] tracking-tight mb-3">
                     {data.name}
                 </h2>
                 
                 {/* Region / Grape Pills */}
-                <div className="flex flex-wrap gap-1.5 mb-4">
-                    <span className="px-2 py-0.5 bg-wine-50 text-wine-800 text-[10px] font-bold rounded-md uppercase tracking-wide border border-wine-100">
+                <div className="flex flex-wrap gap-2 mb-6">
+                    <span className="px-2.5 py-1 bg-wine-50 text-wine-900 text-[10px] font-bold rounded-md uppercase tracking-wider border border-wine-100">
                         {data.region}
                     </span>
                     {data.varietals.slice(0, 2).map(v => (
-                         <span key={v} className="px-2 py-0.5 bg-stone-100 text-stone-600 text-[10px] font-bold rounded-md uppercase tracking-wide border border-stone-200">
+                         <span key={v} className="px-2.5 py-1 bg-stone-100 text-stone-600 text-[10px] font-bold rounded-md uppercase tracking-wider border border-stone-200">
                             {v}
                         </span>
                     ))}
                 </div>
 
                 {/* Price & Score Anchor */}
-                <div className="flex items-center gap-3 mt-auto">
+                <div className="flex items-center gap-5 mt-auto border-t border-stone-100 pt-3">
                     <div>
-                        <p className="text-[10px] text-stone-400 uppercase font-bold">Market Price</p>
-                        <p className="text-lg font-serif font-bold text-wine-900">{data.marketPrice}</p>
+                        <p className="text-[10px] text-stone-400 uppercase tracking-widest font-bold mb-0.5">Market Price</p>
+                        <p className="text-xl font-serif font-bold text-wine-900 tabular-nums">{data.marketPrice}</p>
                     </div>
                     {data.criticScores && data.criticScores.length > 0 && (
-                        <div className="pl-3 border-l border-wine-100">
-                            <p className="text-[10px] text-stone-400 uppercase font-bold">Top Score</p>
-                            <div className="flex items-center gap-1">
-                                <span className="bg-gold-500 text-white text-xs font-bold px-1.5 rounded-sm">
+                        <div className="pl-5 border-l border-stone-200">
+                            <p className="text-[10px] text-stone-400 uppercase tracking-widest font-bold mb-0.5">Top Score</p>
+                            <div className="flex items-center gap-1.5">
+                                <span className="bg-gold-500 text-white text-xs font-bold px-1.5 py-0.5 rounded shadow-sm tabular-nums">
                                     {data.criticScores[0].score}
                                 </span>
-                                <span className="text-[10px] font-bold text-wine-800">{data.criticScores[0].critic.split(' ')[0]}</span>
+                                <span className="text-[10px] font-bold text-stone-600">{data.criticScores[0].critic.split(' ')[0]}</span>
                             </div>
                         </div>
                     )}
@@ -182,14 +266,14 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview }) 
 
       {/* ZONE 2: SENSORY (The Experience) */}
       <div className="mx-4">
-        <h3 className="ml-2 mb-3 text-xs font-bold text-wine-400 uppercase tracking-widest flex items-center gap-2">
-            <Activity className="w-4 h-4" /> Sensory Profile
+        <h3 className="ml-3 mb-4 text-[10px] font-bold text-stone-400 uppercase tracking-widest flex items-center gap-2">
+            <Activity className="w-3 h-3" /> Sensory Profile
         </h3>
         
-        <div className="bg-white rounded-[2rem] p-6 shadow-lg border border-wine-100/50">
+        <div className="bg-white rounded-[2rem] p-6 shadow-lg border border-stone-100">
             {/* Style Meters */}
             {data.styleProfile && (
-                <div className="grid grid-cols-1 gap-1 mb-6">
+                <div className="grid grid-cols-1 gap-1 mb-8">
                     <StyleMeter label="Body & Weight" value={data.styleProfile.body} />
                     <StyleMeter label="Acidity & Freshness" value={data.styleProfile.acidity} />
                     <StyleMeter label="Tannin Structure" value={data.styleProfile.tannins} />
@@ -197,15 +281,15 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview }) 
             )}
 
             {/* Flavor Tags */}
-            <div className="space-y-4">
+            <div className="space-y-5">
                 <div>
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-2 mb-3">
                         <Droplet className="w-4 h-4 text-wine-400" />
-                        <span className="text-xs font-bold text-wine-900 uppercase">Nose & Palate</span>
+                        <span className="text-xs font-bold text-wine-900 uppercase tracking-wide">Nose & Palate</span>
                     </div>
                     <div className="flex flex-wrap gap-2">
                         {[...data.nose.split(','), ...data.taste.split(',')].slice(0, 8).map((note, i) => (
-                            <span key={i} className="px-3 py-1 bg-wine-50 text-wine-800 text-xs font-medium rounded-full border border-wine-100 capitalize">
+                            <span key={i} className="px-3.5 py-1.5 bg-wine-50/50 text-wine-900 text-sm font-medium rounded-full border border-wine-100/50 capitalize shadow-sm">
                                 {note.trim()}
                             </span>
                         ))}
@@ -215,21 +299,21 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview }) 
 
             {/* Service Row */}
             {data.pairing && (
-                <div className="mt-6 pt-6 border-t border-wine-50 grid grid-cols-3 gap-2 text-center">
-                    <div className="bg-stone-50 p-3 rounded-xl">
-                        <Thermometer className="w-5 h-5 text-wine-400 mx-auto mb-1" />
-                        <p className="text-[10px] font-bold text-stone-400 uppercase">Temp</p>
-                        <p className="text-xs font-bold text-wine-900 leading-tight mt-1">{data.pairing.temperature.replace('°C', '°')}</p>
+                <div className="mt-8 pt-6 border-t border-stone-100 grid grid-cols-3 gap-3 text-center">
+                    <div className="bg-stone-50 p-4 rounded-xl border border-stone-100">
+                        <Thermometer className="w-5 h-5 text-stone-400 mx-auto mb-2" />
+                        <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Temp</p>
+                        <p className="text-sm font-bold text-stone-800 leading-tight mt-1 tabular-nums">{data.pairing.temperature.replace('°C', '°')}</p>
                     </div>
-                    <div className="bg-stone-50 p-3 rounded-xl">
-                        <WineIcon className="w-5 h-5 text-wine-400 mx-auto mb-1" />
-                        <p className="text-[10px] font-bold text-stone-400 uppercase">Glass</p>
-                        <p className="text-xs font-bold text-wine-900 leading-tight mt-1">{data.pairing.glassware.split(' ')[0]}</p>
+                    <div className="bg-stone-50 p-4 rounded-xl border border-stone-100">
+                        <WineIcon className="w-5 h-5 text-stone-400 mx-auto mb-2" />
+                        <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Glass</p>
+                        <p className="text-sm font-bold text-stone-800 leading-tight mt-1">{data.pairing.glassware.split(' ')[0]}</p>
                     </div>
-                    <div className="bg-stone-50 p-3 rounded-xl">
-                        <Clock className="w-5 h-5 text-wine-400 mx-auto mb-1" />
-                        <p className="text-[10px] font-bold text-stone-400 uppercase">Decant</p>
-                        <p className="text-xs font-bold text-wine-900 leading-tight mt-1">{data.pairing.decanting.replace('minutes', 'min')}</p>
+                    <div className="bg-stone-50 p-4 rounded-xl border border-stone-100">
+                        <Clock className="w-5 h-5 text-stone-400 mx-auto mb-2" />
+                        <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Decant</p>
+                        <p className="text-sm font-bold text-stone-800 leading-tight mt-1 tabular-nums">{data.pairing.decanting.replace('minutes', 'min')}</p>
                     </div>
                 </div>
             )}
@@ -238,49 +322,49 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview }) 
 
       {/* ZONE 3: ANALYSIS (The Investment) */}
       <div className="mx-4">
-         <h3 className="ml-2 mb-3 text-xs font-bold text-wine-400 uppercase tracking-widest flex items-center gap-2">
-            <TrendingUp className="w-4 h-4" /> Value Analysis
+         <h3 className="ml-3 mb-4 text-[10px] font-bold text-stone-400 uppercase tracking-widest flex items-center gap-2">
+            <TrendingUp className="w-3 h-3" /> Value Analysis
         </h3>
 
         {data.aging && (
-            <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-[2rem] p-6 text-white shadow-xl relative overflow-hidden">
+            <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-[2rem] p-6 text-white shadow-xl shadow-slate-900/20 relative overflow-hidden">
                 {/* Glow effect */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
                 {/* Timeline Visual */}
                 <div className="relative mb-8">
-                     <div className="flex justify-between text-[10px] uppercase font-bold text-slate-400 mb-2">
+                     <div className="flex justify-between text-[10px] uppercase font-bold text-slate-400 mb-2 tracking-widest">
                         <span>Start</span>
                         <span className="text-gold-400">Peak Maturity</span>
                         <span>End</span>
                      </div>
-                     <div className="h-2 bg-slate-700 rounded-full relative">
+                     <div className="h-2 bg-slate-700/50 rounded-full relative overflow-hidden">
                         {/* Fake active bar for visual effect */}
-                        <div className="absolute left-[10%] right-[10%] h-full bg-gradient-to-r from-slate-600 via-gold-500 to-slate-600 rounded-full opacity-80"></div>
+                        <div className="absolute left-[10%] right-[10%] h-full bg-gradient-to-r from-slate-600 via-gold-500 to-slate-600 opacity-80"></div>
                      </div>
-                     <div className="flex justify-between text-sm font-bold mt-2 font-mono">
+                     <div className="flex justify-between text-sm font-bold mt-2 font-mono tracking-tighter">
                         <span>{data.aging.drinkFrom}</span>
-                        <span className="text-gold-400">{data.aging.peakYears}</span>
+                        <span className="text-gold-400 text-base">{data.aging.peakYears}</span>
                         <span>{data.aging.drinkUntil}</span>
                      </div>
                 </div>
 
                 {/* Chart */}
                 {data.vintageComparison && data.vintageComparison.length > 0 && (
-                    <div className="mb-6 bg-slate-800/50 rounded-xl p-2 border border-white/5">
+                    <div className="mb-6 bg-slate-800/50 rounded-xl p-2 border border-white/5 shadow-inner">
                         <VintageChart data={data.vintageComparison} currentVintage={data.vintage} />
                     </div>
                 )}
 
                 {/* ROI */}
-                <div className="flex justify-between items-center bg-white/5 rounded-xl p-4 border border-white/10">
+                <div className="flex justify-between items-center bg-white/5 rounded-xl p-4 border border-white/10 backdrop-blur-sm">
                     <div>
-                        <p className="text-[10px] text-slate-400 uppercase font-bold">Projected 5yr Value</p>
-                        <p className="text-lg font-bold text-emerald-400">{data.aging.estimatedValue5Years}</p>
+                        <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Projected 5yr Value</p>
+                        <p className="text-xl font-bold text-emerald-400 tabular-nums tracking-tight">{data.aging.estimatedValue5Years}</p>
                     </div>
                     <div className="text-right">
-                        <p className="text-[10px] text-slate-400 uppercase font-bold">Investment Grade</p>
-                        <p className="text-sm font-bold text-white">{data.aging.investmentPotential}</p>
+                        <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Investment Grade</p>
+                        <p className="text-sm font-bold text-white tracking-wide">{data.aging.investmentPotential}</p>
                     </div>
                 </div>
             </div>
@@ -288,16 +372,16 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview }) 
       </div>
 
       {/* ZONE 4: EXPLORER (The Deep Dive - Collapsible) */}
-      <div className="mx-4 space-y-3">
+      <div className="mx-4 space-y-4">
          
          {/* Pairing Accordion (If list is long) */}
          {data.pairing && (
             <CollapsibleSection title="Food Matches" icon={Utensils}>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2.5">
                     {data.pairing.foods.map((food, i) => (
-                        <div key={i} className="flex items-center gap-2 bg-wine-50 px-3 py-2 rounded-lg border border-wine-100">
+                        <div key={i} className="flex items-center gap-2.5 bg-stone-50 px-3.5 py-2 rounded-lg border border-stone-100">
                              <div className="w-1.5 h-1.5 rounded-full bg-wine-400"></div>
-                             <span className="text-sm text-wine-900 font-medium">{food}</span>
+                             <span className="text-sm text-stone-700 font-medium">{food}</span>
                         </div>
                     ))}
                 </div>
@@ -307,22 +391,22 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview }) 
          {/* Terroir Accordion */}
          {data.terroir && (
             <CollapsibleSection title="Terroir & Winemaking" icon={Mountain}>
-                <div className="space-y-4">
+                <div className="space-y-5">
                     {data.terroir.soil.length > 0 && (
                         <div>
-                             <p className="text-[10px] font-bold text-stone-400 uppercase mb-1">Soil Composition</p>
-                             <p className="text-sm text-stone-800">{data.terroir.soil.join(', ')}</p>
+                             <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1.5">Soil Composition</p>
+                             <p className="text-base text-stone-800 font-medium">{data.terroir.soil.join(', ')}</p>
                         </div>
                     )}
                     {data.terroir.oak && (
                         <div>
-                             <p className="text-[10px] font-bold text-stone-400 uppercase mb-1">Oak Regimen</p>
-                             <p className="text-sm text-stone-800">{data.terroir.oak}</p>
+                             <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1.5">Oak Regimen</p>
+                             <p className="text-base text-stone-800 font-medium">{data.terroir.oak}</p>
                         </div>
                     )}
                     <div className="flex flex-wrap gap-2 pt-2">
                         {data.terroir.farming.map((f, i) => (
-                            <span key={i} className="text-[10px] font-bold bg-green-50 text-green-700 px-2 py-1 rounded border border-green-200 uppercase">
+                            <span key={i} className="text-[10px] font-bold bg-green-50 text-green-700 px-2.5 py-1 rounded-md border border-green-200 uppercase tracking-wide">
                                 {f}
                             </span>
                         ))}
@@ -333,27 +417,53 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview }) 
 
          {/* History Accordion */}
          <CollapsibleSection title="Winery Heritage" icon={BookOpen} defaultOpen={false}>
-             <div className="space-y-4">
-                 <p className="text-sm text-stone-600 leading-relaxed italic">
+             <div className="space-y-6">
+                 <p className="text-[1.05rem] text-stone-700 leading-loose font-serif italic border-l-2 border-wine-200 pl-4">
                     "{data.wineryInfo}"
                  </p>
                  
                  {data.bestVintages && (
-                     <div className="bg-stone-50 p-3 rounded-xl border border-stone-100">
-                         <p className="text-[10px] font-bold text-stone-400 uppercase mb-2">Legendary Vintages</p>
-                         <div className="flex flex-wrap gap-2">
-                             {data.bestVintages.map((y, i) => (
-                                 <span key={i} className="text-xs font-bold text-wine-800">{y}</span>
-                             ))}
+                     <div className="bg-stone-50 p-4 rounded-xl border border-stone-100">
+                         <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-3">Legendary Vintages</p>
+                         <div className="space-y-3">
+                             {data.bestVintages.map((v, i) => {
+                                 // Backward compatibility check for old string-based data
+                                 if (typeof v === 'string') {
+                                     return (
+                                        <span key={i} className="text-sm font-bold text-wine-900 bg-white px-2 py-1 rounded shadow-sm border border-stone-200 tabular-nums inline-block mr-2">
+                                            {v}
+                                        </span>
+                                     );
+                                 }
+                                 // New Rich Data Display
+                                 return (
+                                    <div key={i} className="bg-white p-3 rounded-lg border border-stone-200 shadow-sm">
+                                        <div className="flex items-baseline gap-2 mb-1">
+                                            <span className="text-wine-900 font-bold text-lg font-serif">{v.year}</span>
+                                            <span className="text-xs text-stone-500 font-medium leading-relaxed">{v.notes}</span>
+                                        </div>
+                                        {v.awards && v.awards.length > 0 && (
+                                            <div className="flex flex-wrap gap-1.5 mt-2">
+                                                {v.awards.map((award, j) => (
+                                                    <span key={j} className="text-[10px] font-bold bg-gold-50 text-gold-700 px-1.5 py-0.5 rounded border border-gold-200 uppercase tracking-wide flex items-center gap-1">
+                                                        <Award className="w-3 h-3" />
+                                                        {award}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                 );
+                             })}
                          </div>
                      </div>
                  )}
 
                  {data.funFacts && (
-                     <div className="space-y-2">
+                     <div className="space-y-3">
                          {data.funFacts.map((fact, i) => (
-                             <div key={i} className="flex gap-2 text-sm text-stone-600">
-                                 <Lightbulb className="w-4 h-4 text-gold-500 shrink-0 mt-0.5" />
+                             <div key={i} className="flex gap-3 text-sm text-stone-600 leading-relaxed bg-white p-3 rounded-lg border border-stone-100">
+                                 <Lightbulb className="w-5 h-5 text-gold-500 shrink-0" />
                                  <span>{fact}</span>
                              </div>
                          ))}
@@ -363,14 +473,24 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview }) 
          </CollapsibleSection>
       </div>
 
-      {/* Download Button */}
-      <div className="px-6">
+      {/* Action Buttons */}
+      <div className="px-6 grid grid-cols-2 gap-4">
+        {/* Copy for Docs Button */}
+        <button 
+          onClick={copyForDocs}
+          className={`w-full py-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm border tracking-wide uppercase ${copied ? 'bg-green-50 border-green-200 text-green-700' : 'bg-white border-wine-100 text-wine-900 hover:bg-wine-50'}`}
+        >
+          {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+          {copied ? 'Copied!' : 'Copy for Docs'}
+        </button>
+
+        {/* Text Download Button */}
         <button 
           onClick={downloadInfo}
-          className="w-full bg-white border border-wine-200 text-wine-900 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm hover:bg-wine-50"
+          className="w-full bg-wine-900 text-white py-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg shadow-wine-900/20 hover:bg-wine-800 tracking-wide uppercase"
         >
           <Download className="w-4 h-4" />
-          Save Report
+          Save Text
         </button>
       </div>
 

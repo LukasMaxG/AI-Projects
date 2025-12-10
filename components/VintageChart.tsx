@@ -78,9 +78,9 @@ export const VintageChart: React.FC<VintageChartProps> = ({ data, currentVintage
           </defs>
 
           {/* Background Grid Lines */}
-          <line x1={paddingX} y1={paddingY} x2={width - paddingX} y2={paddingY} stroke="#e5e7eb" strokeWidth="1" strokeDasharray="5,5" />
-          <line x1={paddingX} y1={paddingY + graphHeight/2} x2={width - paddingX} y2={paddingY + graphHeight/2} stroke="#e5e7eb" strokeWidth="1" strokeDasharray="5,5" />
-          <line x1={paddingX} y1={height - paddingY} x2={width - paddingX} y2={height - paddingY} stroke="#e5e7eb" strokeWidth="1" strokeDasharray="5,5" />
+          <line x1={paddingX} y1={paddingY} x2={width - paddingX} y2={paddingY} stroke="#e5e7eb" strokeWidth="1" strokeDasharray="5,5" strokeOpacity="0.2" />
+          <line x1={paddingX} y1={paddingY + graphHeight/2} x2={width - paddingX} y2={paddingY + graphHeight/2} stroke="#e5e7eb" strokeWidth="1" strokeDasharray="5,5" strokeOpacity="0.2" />
+          <line x1={paddingX} y1={height - paddingY} x2={width - paddingX} y2={height - paddingY} stroke="#e5e7eb" strokeWidth="1" strokeDasharray="5,5" strokeOpacity="0.2" />
 
           {/* The Filled Area */}
           <path 
@@ -108,7 +108,7 @@ export const VintageChart: React.FC<VintageChartProps> = ({ data, currentVintage
             return (
               <g key={d.year}>
                 {/* Interaction Target (invisible larger circle) */}
-                <circle cx={cx} cy={cy} r="20" fill="transparent" />
+                <circle cx={cx} cy={cy} r="30" fill="transparent" />
                 
                 {/* Visual Dot */}
                 <circle 
@@ -126,8 +126,8 @@ export const VintageChart: React.FC<VintageChartProps> = ({ data, currentVintage
                   x={cx} 
                   y={cy - 20} 
                   textAnchor="middle" 
-                  className={`text-2xl font-bold fill-wine-900 ${isCurrent ? 'font-bold' : 'font-medium opacity-70'}`}
-                  style={{ fontSize: '24px', fontFamily: '"Inter", sans-serif' }}
+                  className={`text-2xl fill-white ${isCurrent ? 'font-bold' : 'font-medium opacity-70'}`}
+                  style={{ fontSize: '24px', fontFamily: '"Inter", sans-serif', fontWeight: 600 }}
                 >
                   {d.score}
                 </text>
@@ -137,8 +137,8 @@ export const VintageChart: React.FC<VintageChartProps> = ({ data, currentVintage
                   x={cx} 
                   y={height} 
                   textAnchor="middle" 
-                  className={`fill-wine-800 ${isCurrent ? 'font-bold' : 'font-medium opacity-60'}`}
-                  style={{ fontSize: '20px', fontFamily: '"Inter", sans-serif' }}
+                  className={`fill-slate-400 ${isCurrent ? 'font-bold fill-white' : 'font-medium opacity-60'}`}
+                  style={{ fontSize: '20px', fontFamily: '"Inter", sans-serif', fontWeight: 500 }}
                 >
                   {d.year}
                 </text>
@@ -149,7 +149,7 @@ export const VintageChart: React.FC<VintageChartProps> = ({ data, currentVintage
 
         {/* Current Vintage Indicator Overlay */}
         {sortedData.find(d => d.year === currentVintage) && (
-            <div className="absolute top-2 right-2 bg-wine-50/80 backdrop-blur border border-wine-100 px-3 py-1 rounded-full text-xs font-bold text-wine-800 shadow-sm pointer-events-none">
+            <div className="absolute top-2 right-2 bg-slate-800/80 backdrop-blur border border-white/10 px-3 py-1 rounded-full text-xs font-bold text-white shadow-sm pointer-events-none tracking-wide">
                 Comparing {currentVintage}
             </div>
         )}

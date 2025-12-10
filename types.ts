@@ -36,7 +36,15 @@ export interface TerroirData {
   farming: string[]; // e.g. ["Organic", "Biodynamic"]
 }
 
+export interface LegendaryVintage {
+  year: string;
+  notes: string;
+  awards: string[];
+}
+
 export interface WineData {
+  id?: string; // Unique ID for history
+  timestamp?: number; // Time of scan
   name: string;
   vintage: string;
   country: string;
@@ -53,10 +61,11 @@ export interface WineData {
   marketPrice: string;
   wineryInfo: string;
   websiteUrl?: string; // New: Official Website
-  onlineImage?: string; // New: AI found image URL
+  onlineImage?: string; // New: AI found image URL (Primary)
+  imageCandidates?: string[]; // New: List of candidate URLs to try if primary fails
   awards: string[];
   funFacts: string[]; 
-  bestVintages?: string[]; // New: List of best years
+  bestVintages?: LegendaryVintage[] | string[]; // New: List of best years (Rich object or legacy string)
   sources: string[];
   
   // New Enhanced Fields

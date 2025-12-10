@@ -1,15 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { ScanButton } from './components/ScanButton';
 import { WineDisplay } from './components/WineDisplay';
 import { analyzeWineLabel, searchWineByName } from './services/geminiService';
-import { AnalysisState } from './types';
-import { Loader2, AlertCircle, Search, ArrowRight, Sparkles } from 'lucide-react';
+import { AnalysisState, WineData } from './types';
+import { Loader2, AlertCircle, Search, ArrowRight, Sparkles, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 
 const App: React.FC = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<AnalysisState>({ status: 'idle' });
   const [searchQuery, setSearchQuery] = useState('');
+  const [history, setHistory] = useState<WineData[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+
+  // Load history on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('wineHistory');
+    if (saved) {
+      try {
+        setHistory(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to parse history");
+      }
+    }
+  }, []);
+
+  const saveToHistory = (data: WineData) => {
+    setHistory(prev => {
+      // Remove if duplicate exists (by name and vintage) to push to top
+      const filtered = prev.filter(item => !(item.name === data.name && item.vintage === data.vintage));
+      const newHistory = [data, ...filtered].slice(0, 10); // Keep last 10
+      localStorage.setItem('wineHistory', JSON.stringify(newHistory));
+      return newHistory;
+    });
+  };
 
   const handleImageSelect = async (file: File) => {
     // 1. Create preview
@@ -38,6 +62,7 @@ const App: React.FC = () => {
 
       const data = await analyzeWineLabel(base64Data, file.type);
       setAnalysis({ status: 'success', data });
+      saveToHistory(data);
 
     } catch (error) {
       setAnalysis({ 
@@ -57,6 +82,7 @@ const App: React.FC = () => {
     try {
       const data = await searchWineByName(searchQuery);
       setAnalysis({ status: 'success', data });
+      saveToHistory(data);
     } catch (error) {
        setAnalysis({ 
         status: 'error', 
@@ -65,55 +91,107 @@ const App: React.FC = () => {
     }
   };
 
+  const loadFromHistory = (item: WineData) => {
+      setAnalysis({ status: 'success', data: item });
+      setImagePreview(item.onlineImage || null);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
-    <div className="min-h-screen pb-safe-area bg-wine-50 font-sans selection:bg-wine-200">
+    <div className="min-h-screen pb-safe-area bg-wine-50 font-sans selection:bg-wine-200 flex flex-col">
       <Header />
 
-      <main className="max-w-md mx-auto relative z-10 pb-24">
+      <main className="max-w-md mx-auto relative z-10 w-full flex-grow">
         
         {/* Idle State - Welcome Message & Search */}
         {analysis.status === 'idle' && (
-          <div className="px-6 py-6 animate-fade-in">
+          <div className="px-6 py-6 animate-fade-in space-y-8">
             {/* Search Box */}
-            <div className="mb-10 bg-white p-6 rounded-[2rem] shadow-xl shadow-wine-900/5 border border-wine-100">
-              <h2 className="text-xl font-serif font-bold text-wine-900 mb-4">Find a wine</h2>
+            <div className="bg-white p-6 rounded-[2rem] shadow-xl shadow-wine-900/5 border border-wine-100">
+              <h2 className="text-2xl font-serif font-bold text-wine-900 mb-4 tracking-tight">Find a wine</h2>
               <form onSubmit={handleTextSearch} className="relative group z-10">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-wine-300 w-5 h-5 group-focus-within:text-wine-500 transition-colors" />
+                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-wine-300 w-6 h-6 group-focus-within:text-wine-500 transition-colors" />
                 <input 
                   type="text"
                   placeholder="Type a wine name..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-wine-50/50 border border-wine-100 rounded-full py-4 pl-12 pr-14 text-wine-900 placeholder:text-wine-300/80 focus:outline-none focus:ring-2 focus:ring-wine-200 focus:bg-white transition-all shadow-inner"
+                  className="w-full bg-wine-50/50 border border-wine-100 rounded-full py-4 pl-14 pr-16 text-lg text-wine-900 placeholder:text-wine-300/80 focus:outline-none focus:ring-2 focus:ring-wine-200 focus:bg-white transition-all shadow-inner"
                 />
                 <button 
                   type="submit"
                   disabled={!searchQuery.trim()}
-                  className="absolute right-2 top-2 bottom-2 bg-wine-900 text-white rounded-full w-10 h-10 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-wine-800 transition-colors shadow-md"
+                  className="absolute right-2 top-2 bottom-2 bg-wine-900 text-white rounded-full w-11 h-11 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-wine-800 transition-colors shadow-md active:scale-95"
                 >
                   <ArrowRight className="w-5 h-5" />
                 </button>
               </form>
 
               {/* Vintage Tip */}
-              <div className="mt-4 flex items-start gap-3 text-sm text-wine-700/80 bg-wine-50 p-4 rounded-xl border border-wine-100/60">
+              <div className="mt-4 flex items-start gap-3 text-sm text-wine-800/80 bg-wine-50 p-4 rounded-xl border border-wine-100/60 leading-relaxed">
                 <Sparkles className="w-4 h-4 text-wine-400 shrink-0 mt-0.5 fill-wine-100" />
-                <p className="leading-snug">
-                  <strong>Pro Tip:</strong> Include the <span className="text-wine-900 font-semibold">Vintage Year</span> (e.g. 2018) for the most accurate pricing and rating.
+                <p>
+                  <span className="font-bold uppercase text-[10px] tracking-widest text-wine-400 block mb-1">Pro Tip</span>
+                  Include the <span className="text-wine-900 font-bold">Vintage Year</span> (e.g. 2018) for the most accurate pricing and rating.
                 </p>
               </div>
             </div>
 
+            {/* History Section (Collapsible) */}
+            {history.length > 0 && (
+                <div className="bg-white rounded-2xl border border-wine-100 overflow-hidden shadow-sm">
+                    <button 
+                        onClick={() => setShowHistory(!showHistory)}
+                        className="w-full flex items-center justify-between p-5 bg-white hover:bg-wine-50/50 transition-colors group"
+                    >
+                        <div className="flex items-center gap-3">
+                             <Clock className="w-5 h-5 text-wine-300 group-hover:text-wine-500 transition-colors" />
+                             <span className="font-bold text-wine-900 tracking-tight text-lg">Recent Discoveries</span>
+                        </div>
+                        {showHistory ? <ChevronUp className="w-5 h-5 text-wine-300" /> : <ChevronDown className="w-5 h-5 text-wine-300" />}
+                    </button>
+                    
+                    {showHistory && (
+                        <div className="divide-y divide-wine-50 max-h-72 overflow-y-auto">
+                            {history.map((item, idx) => (
+                                <div 
+                                    key={idx} 
+                                    onClick={() => loadFromHistory(item)}
+                                    className="p-4 flex items-center gap-4 hover:bg-wine-50 cursor-pointer transition-colors"
+                                >
+                                    <div className="w-12 h-12 bg-wine-100 rounded-xl overflow-hidden shrink-0 border border-wine-200">
+                                        {item.onlineImage ? (
+                                            <img src={item.onlineImage} alt="" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-wine-400 font-serif font-bold text-xs">
+                                                {item.vintage}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-semibold text-wine-900 text-base truncate tracking-tight">{item.name}</p>
+                                        <p className="text-xs text-stone-500 font-medium truncate uppercase tracking-wide mt-0.5">{item.region} • {item.vintage}</p>
+                                    </div>
+                                    <div className="bg-wine-50 px-2.5 py-1 rounded-md text-xs font-bold text-wine-800 tabular-nums">
+                                        {item.criticScores?.[0]?.score || '-'}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+
             {/* Divider */}
-            <div className="relative flex items-center justify-center mb-10 opacity-60">
+            <div className="relative flex items-center justify-center opacity-60 py-2">
                <div className="h-px bg-wine-200 w-full absolute"></div>
-               <span className="bg-wine-50 px-3 text-xs font-bold text-wine-400 uppercase tracking-widest relative z-10">or scan label</span>
+               <span className="bg-wine-50 px-4 text-[10px] font-bold text-wine-400 uppercase tracking-widest relative z-10">or scan label</span>
             </div>
 
             {/* Scan Prompt */}
-            <div className="text-center opacity-90">
-              <p className="text-wine-800 font-serif text-lg mb-2">Have the bottle?</p>
-              <p className="text-sm text-wine-600 max-w-[200px] mx-auto leading-relaxed">
+            <div className="text-center">
+              <p className="text-wine-900 font-serif text-2xl font-medium tracking-tight mb-2">Have the bottle?</p>
+              <p className="text-stone-600 max-w-[240px] mx-auto leading-relaxed">
                 Tap the camera button below to instantly analyze a label.
               </p>
             </div>
@@ -122,22 +200,22 @@ const App: React.FC = () => {
 
         {/* Loading State */}
         {analysis.status === 'analyzing' && (
-          <div className="flex flex-col items-center justify-center py-20 px-4 text-center animate-fade-in">
-            <div className="relative">
+          <div className="flex flex-col items-center justify-center py-24 px-6 text-center animate-fade-in">
+            <div className="relative mb-8">
               <div className="absolute inset-0 bg-wine-200 rounded-full animate-ping opacity-75"></div>
-              <div className="relative bg-white p-4 rounded-full shadow-lg">
-                <Loader2 className="w-10 h-10 text-wine-600 animate-spin" />
+              <div className="relative bg-white p-5 rounded-full shadow-xl">
+                <Loader2 className="w-12 h-12 text-wine-600 animate-spin" />
               </div>
             </div>
-            <h3 className="mt-6 text-xl font-serif font-bold text-wine-900">Consulting the Sommelier...</h3>
-            <p className="text-wine-600 mt-2">Researching vintage, price, and tasting notes.</p>
+            <h3 className="text-2xl font-serif font-bold text-wine-900 tracking-tight">Consulting the Sommelier...</h3>
+            <p className="text-stone-500 mt-3 font-medium">Researching vintage, price, and tasting notes.</p>
             {imagePreview && (
-               <div className="mt-8 w-32 h-32 rounded-lg overflow-hidden border-2 border-white shadow-md mx-auto">
-                 <img src={imagePreview} className="w-full h-full object-cover opacity-50" alt="Scanning" />
+               <div className="mt-8 w-32 h-32 rounded-xl overflow-hidden border-4 border-white shadow-2xl mx-auto rotate-3">
+                 <img src={imagePreview} className="w-full h-full object-cover" alt="Scanning" />
                </div>
             )}
             {!imagePreview && searchQuery && (
-               <div className="mt-6 bg-white px-6 py-3 rounded-full border border-wine-100 shadow-sm text-wine-800 font-medium">
+               <div className="mt-8 bg-white px-6 py-3 rounded-full border border-wine-100 shadow-md text-wine-800 font-serif font-medium italic">
                  "{searchQuery}"
                </div>
             )}
@@ -146,13 +224,13 @@ const App: React.FC = () => {
 
         {/* Error State */}
         {analysis.status === 'error' && (
-          <div className="mx-4 mt-8 bg-red-50 border border-red-200 rounded-2xl p-6 text-center animate-fade-in">
-            <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-3" />
-            <h3 className="text-lg font-bold text-red-800 mb-1">Could not identify wine</h3>
-            <p className="text-red-600 text-sm mb-4">{analysis.error}</p>
+          <div className="mx-6 mt-10 bg-white border border-red-100 rounded-[2rem] p-8 text-center animate-fade-in shadow-xl shadow-red-500/5">
+            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-gray-900 mb-2 tracking-tight">Could not identify wine</h3>
+            <p className="text-gray-500 text-sm mb-6 leading-relaxed">{analysis.error}</p>
             <button 
               onClick={() => setAnalysis({ status: 'idle' })}
-              className="px-6 py-2 bg-white border border-red-200 rounded-full text-red-700 font-semibold shadow-sm hover:bg-red-50 transition-colors"
+              className="px-8 py-3 bg-red-50 hover:bg-red-100 border border-red-200 rounded-full text-red-700 font-semibold shadow-sm transition-colors active:scale-95"
             >
               Try again
             </button>
@@ -168,11 +246,11 @@ const App: React.FC = () => {
                 setSearchQuery('');
                 setImagePreview(null);
               }}
-              className="mx-6 mb-4 text-xs font-bold text-wine-400 uppercase tracking-widest hover:text-wine-600 flex items-center gap-1"
+              className="mx-6 mb-4 text-[10px] font-bold text-stone-400 uppercase tracking-widest hover:text-wine-600 flex items-center gap-1.5 transition-colors"
             >
-              ← Back to Search
+              <ArrowRight className="w-3 h-3 rotate-180" /> Back to Search
             </button>
-            <WineDisplay data={analysis.data} imagePreview={imagePreview || 'https://images.unsplash.com/photo-1559563362-c667ba5f5480?auto=format&fit=crop&q=80&w=600'} />
+            <WineDisplay data={analysis.data} imagePreview={imagePreview} />
           </div>
         )}
 
@@ -182,6 +260,12 @@ const App: React.FC = () => {
         onImageSelect={handleImageSelect} 
         disabled={analysis.status === 'analyzing'} 
       />
+
+      {/* Footer */}
+      <footer className="w-full pt-8 pb-32 mt-8 text-center bg-wine-50 border-t border-wine-100/50">
+        <p className="text-[10px] uppercase tracking-widest text-stone-400 font-bold mb-1">Created By Manny Gutierrez</p>
+        <p className="text-[10px] text-stone-400/80">copyright www.MagmaTek.com</p>
+      </footer>
     </div>
   );
 };
