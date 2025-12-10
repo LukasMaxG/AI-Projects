@@ -20,7 +20,7 @@ TASKS:
 7. SERVICE: Pairing, temp, decant, GLASSWARE.
 8. ONLINE: Find official winery URL.
 9. IMAGE: Search for a list of 8-10 valid, publicly accessible URLs for images.
-   - Candidates: Bottle shot (highest priority), Label shot, Winery Estate, Winery Logo.
+   - Candidates: Winery Estate/Chateau (Highest Priority), Vineyard landscape, Bottle shot, Label shot.
    - SOURCES: Official Winery Website, winelibrary.com, totalwine.com, winemag.com (Wine Enthusiast), wikipedia.org, vivino.com, wine.com, cellartracker.com, decanter.com, winespectator.com.
    - CRITICAL: Ensure URLs are direct image links ending in .jpg, .png, or .webp. Do not return HTML pages or base64.
 10. HISTORY: Winery origins, fun facts.
@@ -45,7 +45,7 @@ JSON STRUCTURE:
   "wineryInfo": "History...",
   "websiteUrl": "https://...",
   "onlineImage": "https://... (Primary)",
-  "imageCandidates": ["https://... (Bottle)", "https://... (Label)", "https://... (Winery)"],
+  "imageCandidates": ["https://... (Winery)", "https://... (Vineyard)", "https://... (Bottle)"],
   "awards": ["Award 1"],
   "funFacts": ["Fact 1"],
   "bestVintages": [

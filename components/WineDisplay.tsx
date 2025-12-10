@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { WineData, LegendaryVintage } from '../types';
-import { Download, MapPin, Droplet, TrendingUp, Utensils, Thermometer, Wine as WineIcon, Mountain, ExternalLink, Lightbulb, Clock, BookOpen, ChevronDown, ChevronUp, Activity, FileDown, Heart, Award } from 'lucide-react';
+import { Download, MapPin, Droplet, TrendingUp, Utensils, Thermometer, Wine as WineIcon, Mountain, ExternalLink, Lightbulb, Clock, BookOpen, ChevronDown, ChevronUp, Activity, FileDown, Heart, Award, Star } from 'lucide-react';
 import { VintageChart } from './VintageChart';
 
 interface WineDisplayProps {
@@ -128,6 +128,19 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, is
   const mapQuery = encodeURIComponent(`${data.region}, ${data.country}`);
   const mapUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
 
+  // Value Rating Logic (Vivino Style)
+  const score = parseInt(data.criticScores?.[0]?.score || '0');
+  const rating5Scale = score > 0 ? (score / 20).toFixed(1) : 'N/A';
+  
+  const getValueBadge = (score: number) => {
+    if (score >= 95) return { label: "Iconic", color: "bg-purple-100 text-purple-700 border-purple-200" };
+    if (score >= 90) return { label: "Excellent Value", color: "bg-emerald-100 text-emerald-700 border-emerald-200" };
+    if (score >= 85) return { label: "Good Value", color: "bg-amber-100 text-amber-700 border-amber-200" };
+    return null;
+  };
+  
+  const valueBadge = getValueBadge(score);
+
   const WebsiteWrapper = ({ children }: { children: React.ReactNode }) => {
     if (data.websiteUrl) {
       return (
@@ -216,73 +229,81 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, is
         <div className="absolute -top-10 -right-10 w-40 h-40 bg-wine-50 rounded-full blur-3xl"></div>
 
         <div className="relative z-10 flex gap-6">
-            {/* Left: Image */}
+            {/* Left: Image (Winery or Bottle) */}
             <div className="w-1/3 shrink-0">
                <WebsiteWrapper>
-                  <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-white border border-stone-100 shadow-inner relative flex items-center justify-center group">
+                  <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-stone-100 border border-stone-100 shadow-md relative flex items-center justify-center group">
                     <img 
                       src={displayImage} 
                       onError={handleImageError}
-                      className="w-full h-full object-cover mix-blend-multiply" 
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
                       alt={data.name} 
                     />
                     {data.vintage && (
-                        <div className="absolute bottom-0 inset-x-0 bg-wine-900/90 text-white text-center text-xs font-bold py-1.5 backdrop-blur-sm tracking-wide">
+                        <div className="absolute top-2 left-2 bg-white/90 text-wine-900 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm backdrop-blur-md">
                             {data.vintage}
                         </div>
-                    )}
-                    {/* Image Source Indicator (Debug/Info) */}
-                    {!imagePreview && !usingFallback && (
-                       <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <div className="w-2 h-2 bg-emerald-400 rounded-full shadow-sm ring-1 ring-white" title="Live Web Image"></div>
-                       </div>
                     )}
                   </div>
                </WebsiteWrapper>
             </div>
 
             {/* Right: Info */}
-            <div className="flex-1 flex flex-col justify-center">
+            <div className="flex-1 flex flex-col justify-center min-w-0">
                 <a 
                    href={mapUrl}
                    target="_blank"
                    rel="noopener noreferrer"
-                   className="flex items-center gap-1.5 text-wine-600 hover:text-wine-800 text-[10px] font-bold uppercase tracking-widest mb-3 cursor-pointer transition-colors"
+                   className="flex items-center gap-1.5 text-wine-600 hover:text-wine-800 text-[10px] font-bold uppercase tracking-widest mb-2 cursor-pointer transition-colors"
                 >
                     <MapPin className="w-3 h-3" />
                     <span className="line-clamp-1 underline decoration-dotted underline-offset-2">{data.country}</span>
                 </a>
-                <h2 className="text-3xl font-serif font-bold text-wine-950 leading-[1.1] tracking-tight mb-3">
+                <h2 className="text-2xl font-serif font-bold text-wine-950 leading-[1.1] tracking-tight mb-2 line-clamp-3">
                     {data.name}
                 </h2>
                 
                 {/* Region / Grape Pills */}
-                <div className="flex flex-wrap gap-2 mb-6">
-                    <span className="px-2.5 py-1 bg-wine-50 text-wine-900 text-[10px] font-bold rounded-md uppercase tracking-wider border border-wine-100">
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                    <span className="px-2 py-0.5 bg-wine-50 text-wine-900 text-[9px] font-bold rounded-md uppercase tracking-wide border border-wine-100 truncate max-w-full">
                         {data.region}
                     </span>
-                    {data.varietals.slice(0, 2).map(v => (
-                         <span key={v} className="px-2.5 py-1 bg-stone-100 text-stone-600 text-[10px] font-bold rounded-md uppercase tracking-wider border border-stone-200">
+                    {data.varietals.slice(0, 1).map(v => (
+                         <span key={v} className="px-2 py-0.5 bg-stone-100 text-stone-600 text-[9px] font-bold rounded-md uppercase tracking-wide border border-stone-200">
                             {v}
                         </span>
                     ))}
                 </div>
 
-                {/* Price & Score Anchor */}
-                <div className="flex items-center gap-5 mt-auto border-t border-stone-100 pt-3">
+                {/* Modern Value Indicator & Price Card */}
+                <div className="mt-auto bg-stone-50 rounded-xl p-3 border border-stone-100 flex items-center justify-between shadow-sm">
+                    {/* Price */}
                     <div>
-                        <p className="text-[10px] text-stone-400 uppercase tracking-widest font-bold mb-0.5">Market Price</p>
-                        <p className="text-xl font-serif font-bold text-wine-900 tabular-nums">{data.marketPrice}</p>
+                        <p className="text-[9px] text-stone-400 uppercase tracking-widest font-bold mb-0.5">Price</p>
+                        <p className="text-lg font-serif font-bold text-wine-900 tabular-nums tracking-tight leading-none">{data.marketPrice}</p>
                     </div>
-                    {data.criticScores && data.criticScores.length > 0 && (
-                        <div className="pl-5 border-l border-stone-200">
-                            <p className="text-[10px] text-stone-400 uppercase tracking-widest font-bold mb-0.5">Top Score</p>
+                    
+                    {/* Vivino-style Rating */}
+                    {score > 0 && (
+                        <div className="flex flex-col items-end">
                             <div className="flex items-center gap-1.5">
-                                <span className="bg-gold-500 text-white text-xs font-bold px-1.5 py-0.5 rounded shadow-sm tabular-nums">
-                                    {data.criticScores[0].score}
-                                </span>
-                                <span className="text-[10px] font-bold text-stone-600">{data.criticScores[0].critic.split(' ')[0]}</span>
+                                <div className="flex flex-col items-end">
+                                    <span className="text-xl font-bold text-wine-900 leading-none">{rating5Scale}</span>
+                                    <div className="flex -space-x-0.5">
+                                        {[1,2,3,4,5].map(i => (
+                                            <Star key={i} className={`w-2.5 h-2.5 ${i <= Math.round(Number(rating5Scale)) ? 'fill-gold-500 text-gold-500' : 'text-stone-300'}`} />
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="bg-wine-900 text-white text-xs font-bold px-1.5 py-1 rounded min-w-[24px] text-center">
+                                    {score}
+                                </div>
                             </div>
+                            {valueBadge && (
+                                <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide mt-1 border ${valueBadge.color}`}>
+                                    {valueBadge.label}
+                                </span>
+                            )}
                         </div>
                     )}
                 </div>
