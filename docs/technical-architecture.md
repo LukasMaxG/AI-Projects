@@ -62,3 +62,10 @@
 **Reasoning**:
 *   **UI Flexibility**: Allows us to render specific data points as "badges" (e.g., "Organic" tag) or icons (Soil types) rather than just dumping a paragraph of text.
 *   **AI Instruction**: Forcing the AI to fill these specific buckets ensures it actually performs the research for each specific aspect (Soil, Oak, Critics).
+
+### 9. Hierarchical Media Resolution
+**Decision**: The UI implements a specific priority chain for the hero image: User Upload > AI-Discovered URL > Fallback Stock Photo.
+**Reasoning**:
+*   **Truth**: Prioritizes the physical reality (what the user is holding).
+*   **Continuity**: Falls back to a digital representation (if text search was used or scan failed).
+*   **Aesthetics**: Ensures the UI never looks broken (no empty image boxes).
