@@ -24,7 +24,7 @@ TASKS:
    - SOURCES: Official Winery Website, winelibrary.com, totalwine.com, winemag.com (Wine Enthusiast), wikipedia.org, vivino.com, wine.com, cellartracker.com, decanter.com, winespectator.com.
    - CRITICAL: Ensure URLs are direct image links ending in .jpg, .png, or .webp. Do not return HTML pages or base64.
 10. HISTORY: Winery origins, fun facts.
-    LEGENDARY VINTAGES: Identify 2-3 best years. Return year, brief notes on why it was good, and key awards/scores for that specific vintage.
+    LEGENDARY VINTAGES: Identify 2-3 best years. Return year, detailed notes on weather/quality/context, and key awards/scores for that specific vintage.
 
 JSON STRUCTURE:
 {

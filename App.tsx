@@ -4,24 +4,33 @@ import { ScanButton } from './components/ScanButton';
 import { WineDisplay } from './components/WineDisplay';
 import { analyzeWineLabel, searchWineByName } from './services/geminiService';
 import { AnalysisState, WineData } from './types';
-import { Loader2, AlertCircle, Search, ArrowRight, Sparkles, Clock, ChevronDown, ChevronUp } from 'lucide-react';
+import { Loader2, AlertCircle, Search, ArrowRight, Sparkles, Clock, ChevronDown, ChevronUp, Heart } from 'lucide-react';
 
 const App: React.FC = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<AnalysisState>({ status: 'idle' });
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // History State
   const [history, setHistory] = useState<WineData[]>([]);
-  const [showHistory, setShowHistory] = useState(false);
+  
+  // Favorites State
+  const [favorites, setFavorites] = useState<WineData[]>([]);
+  
+  // UI State for Lists
+  const [activeTab, setActiveTab] = useState<'recent' | 'favorites'>('recent');
+  const [isListExpanded, setIsListExpanded] = useState(false);
 
-  // Load history on mount
+  // Load data on mount
   useEffect(() => {
-    const saved = localStorage.getItem('wineHistory');
-    if (saved) {
-      try {
-        setHistory(JSON.parse(saved));
-      } catch (e) {
-        console.error("Failed to parse history");
-      }
+    try {
+      const savedHistory = localStorage.getItem('wineHistory');
+      if (savedHistory) setHistory(JSON.parse(savedHistory));
+
+      const savedFavorites = localStorage.getItem('wineFavorites');
+      if (savedFavorites) setFavorites(JSON.parse(savedFavorites));
+    } catch (e) {
+      console.error("Failed to parse local storage", e);
     }
   }, []);
 
@@ -33,6 +42,24 @@ const App: React.FC = () => {
       localStorage.setItem('wineHistory', JSON.stringify(newHistory));
       return newHistory;
     });
+  };
+
+  const toggleFavorite = (wine: WineData) => {
+    setFavorites(prev => {
+      const isFav = prev.some(w => w.name === wine.name && w.vintage === wine.vintage);
+      let newFavs;
+      if (isFav) {
+        newFavs = prev.filter(w => !(w.name === wine.name && w.vintage === wine.vintage));
+      } else {
+        newFavs = [wine, ...prev];
+      }
+      localStorage.setItem('wineFavorites', JSON.stringify(newFavs));
+      return newFavs;
+    });
+  };
+
+  const isFavorite = (wine: WineData) => {
+      return favorites.some(w => w.name === wine.name && w.vintage === wine.vintage);
   };
 
   const handleImageSelect = async (file: File) => {
@@ -97,6 +124,8 @@ const App: React.FC = () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const displayList = activeTab === 'recent' ? history : favorites;
+
   return (
     <div className="min-h-screen pb-safe-area bg-wine-50 font-sans selection:bg-wine-200 flex flex-col">
       <Header />
@@ -137,50 +166,73 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            {/* History Section (Collapsible) */}
-            {history.length > 0 && (
-                <div className="bg-white rounded-2xl border border-wine-100 overflow-hidden shadow-sm">
+            {/* List Section (Favorites / History) */}
+            <div className="bg-white rounded-2xl border border-wine-100 overflow-hidden shadow-sm">
+                
+                {/* Tabs Header */}
+                <div className="flex border-b border-wine-50">
                     <button 
-                        onClick={() => setShowHistory(!showHistory)}
-                        className="w-full flex items-center justify-between p-5 bg-white hover:bg-wine-50/50 transition-colors group"
+                        onClick={() => { setActiveTab('recent'); setIsListExpanded(true); }}
+                        className={`flex-1 py-4 text-sm font-bold uppercase tracking-wide flex items-center justify-center gap-2 transition-colors ${activeTab === 'recent' ? 'text-wine-900 bg-wine-50/50' : 'text-stone-400 hover:text-stone-600'}`}
                     >
-                        <div className="flex items-center gap-3">
-                             <Clock className="w-5 h-5 text-wine-300 group-hover:text-wine-500 transition-colors" />
-                             <span className="font-bold text-wine-900 tracking-tight text-lg">Recent Discoveries</span>
-                        </div>
-                        {showHistory ? <ChevronUp className="w-5 h-5 text-wine-300" /> : <ChevronDown className="w-5 h-5 text-wine-300" />}
+                        <Clock className="w-4 h-4" />
+                        Recent
                     </button>
-                    
-                    {showHistory && (
-                        <div className="divide-y divide-wine-50 max-h-72 overflow-y-auto">
-                            {history.map((item, idx) => (
-                                <div 
-                                    key={idx} 
-                                    onClick={() => loadFromHistory(item)}
-                                    className="p-4 flex items-center gap-4 hover:bg-wine-50 cursor-pointer transition-colors"
-                                >
-                                    <div className="w-12 h-12 bg-wine-100 rounded-xl overflow-hidden shrink-0 border border-wine-200">
-                                        {item.onlineImage ? (
-                                            <img src={item.onlineImage} alt="" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-wine-400 font-serif font-bold text-xs">
-                                                {item.vintage}
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="font-semibold text-wine-900 text-base truncate tracking-tight">{item.name}</p>
-                                        <p className="text-xs text-stone-500 font-medium truncate uppercase tracking-wide mt-0.5">{item.region} • {item.vintage}</p>
-                                    </div>
-                                    <div className="bg-wine-50 px-2.5 py-1 rounded-md text-xs font-bold text-wine-800 tabular-nums">
-                                        {item.criticScores?.[0]?.score || '-'}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                    <div className="w-px bg-wine-50"></div>
+                    <button 
+                         onClick={() => { setActiveTab('favorites'); setIsListExpanded(true); }}
+                         className={`flex-1 py-4 text-sm font-bold uppercase tracking-wide flex items-center justify-center gap-2 transition-colors ${activeTab === 'favorites' ? 'text-wine-900 bg-wine-50/50' : 'text-stone-400 hover:text-stone-600'}`}
+                    >
+                        <Heart className="w-4 h-4" />
+                        Favorites
+                    </button>
                 </div>
-            )}
+                
+                {/* Collapsible Toggle (Only if list has items) */}
+                {displayList.length > 0 ? (
+                    <>
+                         <button 
+                            onClick={() => setIsListExpanded(!isListExpanded)}
+                            className="w-full flex items-center justify-center py-2 bg-white hover:bg-stone-50 transition-colors"
+                        >
+                            {isListExpanded ? <ChevronUp className="w-4 h-4 text-stone-300" /> : <ChevronDown className="w-4 h-4 text-stone-300" />}
+                        </button>
+                        
+                        {isListExpanded && (
+                            <div className="divide-y divide-wine-50 max-h-72 overflow-y-auto">
+                                {displayList.map((item, idx) => (
+                                    <div 
+                                        key={idx} 
+                                        onClick={() => loadFromHistory(item)}
+                                        className="p-4 flex items-center gap-4 hover:bg-wine-50 cursor-pointer transition-colors"
+                                    >
+                                        <div className="w-12 h-12 bg-wine-100 rounded-xl overflow-hidden shrink-0 border border-wine-200">
+                                            {item.onlineImage ? (
+                                                <img src={item.onlineImage} alt="" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-wine-400 font-serif font-bold text-xs">
+                                                    {item.vintage}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-semibold text-wine-900 text-base truncate tracking-tight">{item.name}</p>
+                                            <p className="text-xs text-stone-500 font-medium truncate uppercase tracking-wide mt-0.5">{item.region} • {item.vintage}</p>
+                                        </div>
+                                        <div className="bg-wine-50 px-2.5 py-1 rounded-md text-xs font-bold text-wine-800 tabular-nums">
+                                            {item.criticScores?.[0]?.score || '-'}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </>
+                ) : (
+                    <div className="p-8 text-center text-stone-400 text-sm">
+                        {activeTab === 'recent' ? 'No recent searches.' : 'No favorites saved yet.'}
+                    </div>
+                )}
+            </div>
 
             {/* Divider */}
             <div className="relative flex items-center justify-center opacity-60 py-2">
@@ -250,7 +302,12 @@ const App: React.FC = () => {
             >
               <ArrowRight className="w-3 h-3 rotate-180" /> Back to Search
             </button>
-            <WineDisplay data={analysis.data} imagePreview={imagePreview} />
+            <WineDisplay 
+                data={analysis.data} 
+                imagePreview={imagePreview} 
+                isFavorite={isFavorite(analysis.data)}
+                onToggleFavorite={() => toggleFavorite(analysis.data!)}
+            />
           </div>
         )}
 
