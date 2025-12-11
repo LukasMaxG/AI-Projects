@@ -20,12 +20,12 @@
 *   Simplifies the MVP infrastructure (no backend required).
 *   **Security Note**: In a production environment, this would be moved to a serverless function to protect the API Key.
 
-### 2. Model Selection: `gemini-3-pro-preview`
-**Decision**: We specifically utilize the **Pro** variant of the Gemini 3 model for both Text and Image tasks.
+### 2. Model Selection: `gemini-2.5-flash`
+**Decision**: We utilize **Gemini 2.5 Flash** for both Text and Image tasks.
 **Reasoning**:
-*   **Complex Reasoning**: Identifying obscure wine labels requires high-level reasoning capabilities.
-*   **Tool Use**: The **Pro** model has superior support for the `googleSearch` tool, which is critical for finding accurate *current* market prices.
-*   **Multimodality**: Excellent OCR and image understanding to read cursive or stylized fonts.
+*   **Performance**: Flash provides significantly lower latency (5-15s) compared to Pro models (30-60s), which is critical for a consumer-facing "instant scan" app.
+*   **Efficiency**: Capable of handling the Google Search tool and complex JSON formatting without the computational overhead of the larger model.
+*   **Multimodality**: Native support for image understanding allows for seamless label scanning.
 
 ### 3. Structured Output Strategy (JSON)
 **Decision**: We instruct the model via `systemInstruction` to output raw JSON, and we perform a "soft cleaning" of the response string before parsing.
@@ -34,7 +34,7 @@
 *   We rely on prompt engineering ("strict JSON") and a `try-catch` block in `geminiService.ts` rather than strict schema validation, as schema validation can sometimes conflict with Search Tool outputs in the current API version.
 
 ### 4. Zero-Backend Data Export
-**Decision**: The "Download" feature generates a Blob URL in the browser.
+**Decision**: The "Export to Docs" feature generates a Blob URL (HTML/Text) entirely in the browser.
 **Reasoning**:
 *   Keeps the app offline-capable for this specific feature.
 *   No server storage costs for generated reports.
@@ -65,7 +65,14 @@
 *   **Backward Compatibility**: The code includes checks (e.g., `typeof v === 'string'`) to gracefully handle older history items stored before the data model was upgraded.
 
 ### 9. Multi-Source Heuristic Image Search
-**Decision**: Instead of asking for a single image URL, we instruct the AI to generate a list of 8-10 "Candidate URLs" from specific high-probability sources (WineLibrary, Total Wine, Wikipedia, etc.). The UI then cycles through these candidates if one fails.
+**Decision**: Instead of asking for a single image URL, we instruct the AI to generate a list of 4-6 "Candidate URLs" from specific high-probability sources.
 **Reasoning**:
 *   **Reliability**: Hotlinking protection and 404s are common with web images. A single source has a high failure rate.
-*   **Redundancy**: By providing a prioritized list (Bottle > Label > Winery), we ensure the user almost always sees *something* relevant before falling back to a stock photo.
+*   **Optimization**: We reduced this from 10 to ~5 to improve generation speed while maintaining enough redundancy for the retry logic.
+
+### 10. Client-Side Persistence (Favorites & History)
+**Decision**: We utilize browser `localStorage` to manage the "Favorites" and "Recent History" collections.
+**Reasoning**:
+*   **Immediate Availability**: Data is available instantly on app load without network requests.
+*   **Privacy**: User data remains entirely on their device.
+*   **Simplicity**: Avoids the complexity of user authentication and database schemas for the MVP phase.

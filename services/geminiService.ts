@@ -5,26 +5,26 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const SYSTEM_INSTRUCTION = `
 You are an expert Master Sommelier.
-Provide a fast, accurate report on the requested wine (image or name).
+Provide a fast, accurate report on the requested wine.
 Research using Google Search to find accurate, real-time data.
 
-CRITICAL: Return ONLY raw JSON. No Markdown. No code blocks.
+CRITICAL: Return ONLY raw JSON. No Markdown.
 
 TASKS:
 1. IDENTIFY: Wine, vintage, grapes, ABV, region.
 2. SENSORY: Color, Nose, Taste.
-3. CRITICS: Find scores (Parker, Spectator, Suckling).
+3. CRITICS: Scores (Parker, Spectator, etc).
 4. TERROIR: Soil, oak, farming.
-5. VINTAGE: Compare requested vintage vs 2-3 others.
+5. VINTAGE: Compare requested vintage vs 2 others.
 6. INVEST: Drinking window, peak, future value.
 7. SERVICE: Pairing, temp, decant, GLASSWARE.
 8. ONLINE: Find official winery URL.
-9. IMAGE: Search for a list of 8-10 valid, publicly accessible URLs for images.
-   - Candidates: Winery Estate/Chateau (Highest Priority), Vineyard landscape, Bottle shot, Label shot.
-   - SOURCES: Official Winery Website, winelibrary.com, totalwine.com, winemag.com (Wine Enthusiast), wikipedia.org, vivino.com, wine.com, cellartracker.com, decanter.com, winespectator.com.
-   - CRITICAL: Ensure URLs are direct image links ending in .jpg, .png, or .webp. Do not return HTML pages or base64.
-10. HISTORY: Winery origins, fun facts.
-    LEGENDARY VINTAGES: Identify 2-3 best years. Return year, detailed notes on weather/quality/context, and key awards/scores for that specific vintage.
+9. IMAGES: Find 4-6 valid, publicly accessible URLs.
+   - Candidates: Winery Estate (Priority), Vineyard, Bottle shot.
+   - SOURCES: Official Site, winelibrary.com, totalwine.com, vivino.com, wine.com.
+   - CRITICAL: Direct image links (.jpg, .png).
+10. HISTORY: Origins, fun facts.
+    LEGENDARY VINTAGES: Identify 2-3 best years with notes/awards.
 
 JSON STRUCTURE:
 {
@@ -45,11 +45,11 @@ JSON STRUCTURE:
   "wineryInfo": "History...",
   "websiteUrl": "https://...",
   "onlineImage": "https://... (Primary)",
-  "imageCandidates": ["https://... (Winery)", "https://... (Vineyard)", "https://... (Bottle)"],
+  "imageCandidates": ["https://...", "https://..."],
   "awards": ["Award 1"],
   "funFacts": ["Fact 1"],
   "bestVintages": [
-    { "year": "2016", "notes": "Exceptional weather conditions...", "awards": ["97pts WS", "Gold Medal"] }
+    { "year": "2016", "notes": "Notes...", "awards": ["97pts"] }
   ],
   "criticScores": [{ "critic": "RP", "score": "96" }],
   "terroir": {
@@ -122,7 +122,7 @@ const parseResponse = (text: string, groundingMetadata: any): WineData => {
 export const analyzeWineLabel = async (base64Image: string, mimeType: string): Promise<WineData> => {
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-2.5-flash',
       contents: {
         parts: [
           {
@@ -153,7 +153,7 @@ export const analyzeWineLabel = async (base64Image: string, mimeType: string): P
 export const searchWineByName = async (wineName: string): Promise<WineData> => {
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-2.5-flash',
       contents: {
         parts: [
           {

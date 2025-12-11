@@ -224,13 +224,13 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, is
     <div className="pb-24 space-y-6">
       
       {/* ZONE 1: SNAPSHOT (Header) */}
-      <div className="bg-white rounded-[2.5rem] p-6 shadow-xl border border-wine-100/50 relative overflow-hidden mx-4">
+      <div className="bg-white rounded-[2.5rem] p-4 shadow-xl border border-wine-100/50 relative overflow-hidden mx-4">
         {/* Decorative BG */}
         <div className="absolute -top-10 -right-10 w-40 h-40 bg-wine-50 rounded-full blur-3xl"></div>
 
-        <div className="relative z-10 flex gap-6">
+        <div className="relative z-10 flex gap-4">
             {/* Left: Image (Winery or Bottle) */}
-            <div className="w-1/3 shrink-0">
+            <div className="w-28 sm:w-1/3 shrink-0">
                <WebsiteWrapper>
                   <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-stone-100 border border-stone-100 shadow-md relative flex items-center justify-center group">
                     <img 
@@ -249,22 +249,22 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, is
             </div>
 
             {/* Right: Info */}
-            <div className="flex-1 flex flex-col justify-center min-w-0">
+            <div className="flex-1 flex flex-col min-w-0">
                 <a 
                    href={mapUrl}
                    target="_blank"
                    rel="noopener noreferrer"
-                   className="flex items-center gap-1.5 text-wine-600 hover:text-wine-800 text-[10px] font-bold uppercase tracking-widest mb-2 cursor-pointer transition-colors"
+                   className="flex items-center gap-1.5 text-wine-600 hover:text-wine-800 text-[10px] font-bold uppercase tracking-widest mb-1 cursor-pointer transition-colors"
                 >
                     <MapPin className="w-3 h-3" />
                     <span className="line-clamp-1 underline decoration-dotted underline-offset-2">{data.country}</span>
                 </a>
-                <h2 className="text-2xl font-serif font-bold text-wine-950 leading-[1.1] tracking-tight mb-2 line-clamp-3">
+                <h2 className="text-lg sm:text-2xl font-serif font-bold text-wine-950 leading-tight tracking-tight mb-1.5 line-clamp-2">
                     {data.name}
                 </h2>
                 
                 {/* Region / Grape Pills */}
-                <div className="flex flex-wrap gap-1.5 mb-4">
+                <div className="flex flex-wrap gap-1.5 mb-2">
                     <span className="px-2 py-0.5 bg-wine-50 text-wine-900 text-[9px] font-bold rounded-md uppercase tracking-wide border border-wine-100 truncate max-w-full">
                         {data.region}
                     </span>
@@ -275,37 +275,62 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, is
                     ))}
                 </div>
 
+                {/* Wine Description */}
+                <div className="mb-2.5">
+                   <p className="text-[10px] sm:text-xs text-stone-500 font-medium leading-relaxed line-clamp-2">
+                     A {data.styleProfile?.body ? data.styleProfile.body.toLowerCase() : 'classic'} {data.type.toLowerCase()} with {data.abv}. 
+                     Notes of {data.nose.split(',').slice(0, 2).join(', ')}.
+                   </p>
+                </div>
+
                 {/* Modern Value Indicator & Price Card */}
-                <div className="mt-auto bg-stone-50 rounded-xl p-3 border border-stone-100 flex items-center justify-between shadow-sm">
-                    {/* Price */}
-                    <div>
-                        <p className="text-[9px] text-stone-400 uppercase tracking-widest font-bold mb-0.5">Price</p>
-                        <p className="text-lg font-serif font-bold text-wine-900 tabular-nums tracking-tight leading-none">{data.marketPrice}</p>
-                    </div>
-                    
-                    {/* Vivino-style Rating */}
-                    {score > 0 && (
-                        <div className="flex flex-col items-end">
-                            <div className="flex items-center gap-1.5">
-                                <div className="flex flex-col items-end">
-                                    <span className="text-xl font-bold text-wine-900 leading-none">{rating5Scale}</span>
+                <div className="mt-auto">
+                    <div className="bg-stone-50 rounded-xl p-2 border border-stone-100 flex items-center justify-between shadow-sm gap-2 relative overflow-hidden">
+                        
+                        {/* Decorative Gradient for high value */}
+                        {valueBadge?.label === 'Iconic' && (
+                             <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-gold-100/50 to-transparent rounded-bl-3xl pointer-events-none"></div>
+                        )}
+
+                        {/* Price Column */}
+                        <div className="flex-1 min-w-0 flex flex-col justify-center">
+                             <p className="text-[8px] text-stone-400 uppercase tracking-widest font-bold mb-0.5">Market Price</p>
+                             <p className="text-sm sm:text-lg font-serif font-bold text-wine-900 tabular-nums tracking-tight leading-tight whitespace-normal">{data.marketPrice}</p>
+                        </div>
+                        
+                        {/* Divider */}
+                        <div className="w-px h-8 bg-stone-200/80"></div>
+                        
+                        {/* Rating Column */}
+                        {score > 0 ? (
+                            <div className="flex flex-col items-end shrink-0 z-10">
+                                <div className="flex items-center gap-1.5">
+                                    <div className="flex items-baseline gap-1">
+                                        <span className="text-xl sm:text-2xl font-bold text-wine-900 leading-none">{rating5Scale}</span>
+                                    </div>
+                                    <div className="bg-wine-900 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm min-w-[24px] text-center">
+                                        {score}
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-1 mt-0.5">
                                     <div className="flex -space-x-0.5">
                                         {[1,2,3,4,5].map(i => (
                                             <Star key={i} className={`w-2.5 h-2.5 ${i <= Math.round(Number(rating5Scale)) ? 'fill-gold-500 text-gold-500' : 'text-stone-300'}`} />
                                         ))}
                                     </div>
-                                </div>
-                                <div className="bg-wine-900 text-white text-xs font-bold px-1.5 py-1 rounded min-w-[24px] text-center">
-                                    {score}
+                                    {valueBadge && (
+                                        <span className={`text-[7px] font-bold px-1 py-0.5 rounded uppercase tracking-wide border bg-white ${valueBadge.color.replace('bg-', 'text-').replace('text-', 'border-')}`}>
+                                            {valueBadge.label}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
-                            {valueBadge && (
-                                <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide mt-1 border ${valueBadge.color}`}>
-                                    {valueBadge.label}
-                                </span>
-                            )}
-                        </div>
-                    )}
+                        ) : (
+                            <div className="text-right py-1">
+                                <span className="text-xs text-stone-400 italic">No rating</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
