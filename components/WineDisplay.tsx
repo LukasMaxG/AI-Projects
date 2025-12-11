@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { WineData, LegendaryVintage } from '../types';
-import { Download, MapPin, Droplet, TrendingUp, Utensils, Thermometer, Wine as WineIcon, Mountain, ExternalLink, Lightbulb, Clock, BookOpen, ChevronDown, ChevronUp, Activity, FileDown, Heart, Award, Star, PenLine, Sparkles, GraduationCap, Sun } from 'lucide-react';
+import { Download, MapPin, Droplet, TrendingUp, Utensils, Thermometer, Wine as WineIcon, Mountain, ExternalLink, Lightbulb, Clock, BookOpen, ChevronDown, ChevronUp, Activity, FileDown, Heart, Award, Star, PenLine, Sparkles, GraduationCap, Sun, Plus, Package } from 'lucide-react';
 import { VintageChart } from './VintageChart';
 import { CompositionChart } from './CompositionChart';
 
@@ -10,6 +11,7 @@ interface WineDisplayProps {
   isFavorite: boolean;
   onToggleFavorite: () => void;
   onUpdateWine: (updatedData: WineData) => void;
+  onAddToCellar: (wine: WineData, quantity: number, price?: number) => void;
 }
 
 // Map common country names to ISO codes for FlagCDN
@@ -95,9 +97,12 @@ const CollapsibleSection = ({
   );
 };
 
-export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, isFavorite, onToggleFavorite, onUpdateWine }) => {
+export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, isFavorite, onToggleFavorite, onUpdateWine, onAddToCellar }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [usingFallback, setUsingFallback] = useState(false);
+  const [showCellarModal, setShowCellarModal] = useState(false);
+  const [cellarQty, setCellarQty] = useState(1);
+  const [cellarPrice, setCellarPrice] = useState('');
 
   // Local state for notes to handle debounce/focus
   const [noteText, setNoteText] = useState(data.userNotes || '');
@@ -107,6 +112,8 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, is
     setCurrentImageIndex(0);
     setUsingFallback(false);
     setNoteText(data.userNotes || '');
+    setCellarQty(1);
+    setCellarPrice('');
   }, [data]);
   
   const fallbackImage = 'https://images.unsplash.com/photo-1559563362-c667ba5f5480?auto=format&fit=crop&q=80&w=600';
@@ -156,7 +163,7 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, is
   
   const valueBadge = getValueBadge(score);
 
-  // Handlers for My Palate
+  // Handlers
   const handleRating = (rating: number) => {
     onUpdateWine({ ...data, userRating: rating });
   };
@@ -165,6 +172,11 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, is
     if (noteText !== data.userNotes) {
       onUpdateWine({ ...data, userNotes: noteText });
     }
+  };
+
+  const handleAddToCellarSubmit = () => {
+    onAddToCellar(data, cellarQty, cellarPrice ? parseFloat(cellarPrice) : undefined);
+    setShowCellarModal(false);
   };
 
   const ensureAbsoluteUrl = (url: string) => {
@@ -236,8 +248,47 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, is
   };
 
   return (
-    <div className="pb-24 space-y-6">
+    <div className="pb-24 space-y-6 relative">
       
+      {/* Cellar Add Modal */}
+      {showCellarModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
+           <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-scale-up">
+              <h3 className="text-xl font-serif font-bold text-wine-900 mb-4">Add to Cellar</h3>
+              
+              <div className="space-y-4">
+                 <div>
+                    <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest block mb-1">Quantity</label>
+                    <div className="flex items-center gap-4">
+                       <button onClick={() => setCellarQty(Math.max(1, cellarQty - 1))} className="w-10 h-10 rounded-full border border-stone-200 flex items-center justify-center hover:bg-stone-50"><span className="text-lg font-bold">-</span></button>
+                       <span className="text-2xl font-bold text-wine-900 w-8 text-center">{cellarQty}</span>
+                       <button onClick={() => setCellarQty(cellarQty + 1)} className="w-10 h-10 rounded-full bg-wine-50 border border-wine-100 flex items-center justify-center hover:bg-wine-100"><Plus className="w-5 h-5 text-wine-800" /></button>
+                    </div>
+                 </div>
+                 
+                 <div>
+                    <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest block mb-1">Purchase Price (Per Bottle)</label>
+                    <div className="relative">
+                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 font-bold">$</span>
+                       <input 
+                         type="number" 
+                         value={cellarPrice} 
+                         onChange={e => setCellarPrice(e.target.value)}
+                         placeholder="Optional" 
+                         className="w-full pl-7 pr-4 py-3 bg-stone-50 border border-stone-200 rounded-xl font-bold text-wine-900 focus:outline-none focus:ring-2 focus:ring-wine-200"
+                       />
+                    </div>
+                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mt-6">
+                 <button onClick={() => setShowCellarModal(false)} className="py-3 rounded-xl font-bold text-stone-500 hover:bg-stone-50">Cancel</button>
+                 <button onClick={handleAddToCellarSubmit} className="py-3 rounded-xl bg-wine-900 text-white font-bold shadow-lg shadow-wine-900/20 hover:bg-wine-800">Save to Cellar</button>
+              </div>
+           </div>
+        </div>
+      )}
+
       {/* ZONE 1: SNAPSHOT (Header) */}
       <div className="bg-white rounded-[2.5rem] p-4 shadow-xl border border-wine-100/50 relative overflow-hidden mx-4">
         {/* Decorative BG */}
@@ -731,13 +782,13 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, is
           Export to Docs
         </button>
 
-        {/* Favorite Button */}
+        {/* Add to Cellar (Replaces Favorite) */}
         <button 
-          onClick={onToggleFavorite}
-          className={`w-full py-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg tracking-wide uppercase ${isFavorite ? 'bg-wine-600 text-white shadow-wine-900/20 hover:bg-wine-700' : 'bg-wine-900 text-white shadow-wine-900/20 hover:bg-wine-800'}`}
+          onClick={() => setShowCellarModal(true)}
+          className={`w-full py-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg tracking-wide uppercase bg-wine-900 text-white shadow-wine-900/20 hover:bg-wine-800`}
         >
-          <Heart className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
-          {isFavorite ? 'Saved' : 'Add to Favorites'}
+          <Package className="w-4 h-4" />
+          Add to Cellar
         </button>
       </div>
 

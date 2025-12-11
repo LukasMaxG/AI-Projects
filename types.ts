@@ -1,3 +1,4 @@
+
 export interface VintageScore {
   year: string;
   score: number; // 0-100
@@ -110,6 +111,16 @@ export interface WineData {
   
   // Phase 2.7: Education (Winography Style)
   education?: EducationalInsight;
+}
+
+export interface CellarItem {
+  id: string; // Unique instance ID
+  wine: WineData;
+  quantity: number;
+  purchasePrice?: number;
+  purchaseDate?: number;
+  location?: string; // e.g. "Bin 3"
+  addedAt: number;
 }
 
 export interface AnalysisState {
