@@ -14,17 +14,22 @@ TASKS:
 1. IDENTIFY: Wine, vintage, grapes, ABV, region.
 2. SENSORY: Color, Nose, Taste.
 3. CRITICS: Scores (Parker, Spectator, etc).
-4. TERROIR: Soil, oak, farming.
+4. TERROIR: Soil, oak, farming. 
+   - ESTIMATE BLEND: % of each grape (must sum to 100%).
 5. VINTAGE: Compare requested vintage vs 2 others.
-6. INVEST: Drinking window, peak, future value.
+6. INVEST: 
+   - Drinking window (Start, Peak, End).
+   - MARKET VALUE: Research Vivino/WineSearcher/CellarTracker for 5yr value prediction.
+     Provide a brief 1-2 sentence explanation of value potential (e.g., "Likely to appreciate due to scarcity...").
 7. SERVICE: Pairing, temp, decant, GLASSWARE.
 8. ONLINE: Find official winery URL.
 9. IMAGES: Find 4-6 valid, publicly accessible URLs.
-   - Candidates: Winery Estate (Priority), Vineyard, Bottle shot.
-   - SOURCES: Official Site, winelibrary.com, totalwine.com, vivino.com, wine.com.
+   - Candidates: Bottle shot (PRIORITY: Search https://winelibrary.com/wines/), Winery Estate, Vineyard.
+   - SOURCES: https://winelibrary.com/wines/ (Top Priority), Official Site, totalwine.com, vivino.com, wine.com.
    - CRITICAL: Direct image links (.jpg, .png).
 10. HISTORY: Origins, fun facts.
     LEGENDARY VINTAGES: Identify 2-3 best years with notes/awards.
+11. PIVOT: Recommend 2 similar wines (1 similar style/price, 1 hidden gem/value).
 
 JSON STRUCTURE:
 {
@@ -57,6 +62,10 @@ JSON STRUCTURE:
     "oak": "Details",
     "farming": ["Organic"]
   },
+  "grapeComposition": [
+    { "grape": "Cabernet Sauvignon", "percentage": 85 },
+    { "grape": "Merlot", "percentage": 15 }
+  ],
   "styleProfile": {
     "body": "Full",
     "acidity": "High",
@@ -70,14 +79,17 @@ JSON STRUCTURE:
     "drinkUntil": "YYYY",
     "peakYears": "YYYY-YYYY",
     "investmentPotential": "High",
-    "estimatedValue5Years": "$XX"
+    "estimatedValue5Years": "Detailed prediction text..."
   },
   "pairing": {
     "foods": ["Dish"],
     "temperature": "16C",
     "decanting": "30m",
     "glassware": "Bordeaux"
-  }
+  },
+  "recommendations": [
+    { "name": "Wine Name", "reason": "Similar power and structure..." }
+  ]
 }
 `;
 

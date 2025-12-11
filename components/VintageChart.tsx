@@ -7,7 +7,7 @@ interface VintageChartProps {
 }
 
 export const VintageChart: React.FC<VintageChartProps> = ({ data, currentVintage }) => {
-  // Sort data by year just in case AI returns them out of order
+  // Sort data by year
   const sortedData = useMemo(() => {
     return [...data].sort((a, b) => parseInt(a.year) - parseInt(b.year));
   }, [data]);
@@ -16,44 +16,36 @@ export const VintageChart: React.FC<VintageChartProps> = ({ data, currentVintage
 
   // 1. Calculate Scales
   const scores = sortedData.map(d => d.score);
+  // Zoom in on the variance (e.g. if scores are 90-95, don't show 0-100)
   const minScore = Math.min(...scores);
   const maxScore = Math.max(...scores);
   
-  // Add some padding to the Y axis so the line doesn't hit the absolute edges
-  const yPadding = 5;
-  const minY = Math.max(0, minScore - yPadding); // Floor at 0
-  const maxY = Math.min(100, maxScore + yPadding); // Ceiling at 100
+  // Dynamic Y-Axis: min is slightly below lowest score, max is 100
+  const minY = Math.max(0, minScore - 5);
+  const maxY = 100;
   const rangeY = maxY - minY;
 
-  // 2. Helper to map values to SVG coordinates
-  // ViewBox will be 1000 x 200 roughly
-  const width = 1000;
-  const height = 300;
-  const paddingX = 50;
-  const paddingY = 20;
+  const width = 800;
+  const height = 250;
+  const paddingX = 40;
+  const paddingY = 30;
   const graphWidth = width - (paddingX * 2);
   const graphHeight = height - (paddingY * 2);
 
   const getX = (index: number) => {
-    return paddingX + (index / (sortedData.length - 1)) * graphWidth;
+    // Distribute bars evenly
+    const count = sortedData.length;
+    const step = graphWidth / count;
+    // Center the bar in the step
+    return paddingX + (index * step) + (step / 2);
   };
 
   const getY = (score: number) => {
     const normalized = (score - minY) / rangeY;
-    // SVG Y is inverted (0 is top)
     return paddingY + graphHeight - (normalized * graphHeight);
   };
 
-  // 3. Generate Path Data
-  const points = sortedData.map((d, i) => `${getX(i)},${getY(d.score)}`).join(' ');
-  
-  // Area path (closed loop at bottom)
-  const areaPath = `
-    M ${getX(0)},${height} 
-    L ${points} 
-    L ${getX(sortedData.length - 1)},${height} 
-    Z
-  `;
+  const barWidth = Math.min(60, (graphWidth / sortedData.length) * 0.6); // 60% of slot width
 
   return (
     <div className="w-full select-none">
@@ -63,82 +55,65 @@ export const VintageChart: React.FC<VintageChartProps> = ({ data, currentVintage
             className="w-full h-full overflow-visible"
             preserveAspectRatio="none"
         >
+          {/* Gradients */}
           <defs>
-            <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#a32639" stopOpacity="0.4"/>
-              <stop offset="100%" stopColor="#a32639" stopOpacity="0.0"/>
+            <linearGradient id="barGradientCurrent" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#f59e0b" stopOpacity="1"/> {/* Gold-500 */}
+              <stop offset="100%" stopColor="#d97706" stopOpacity="0.8"/> {/* Gold-600 */}
             </linearGradient>
-            <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-              <feMerge>
-                <feMergeNode in="coloredBlur"/>
-                <feMergeNode in="SourceGraphic"/>
-              </feMerge>
-            </filter>
+            <linearGradient id="barGradientOther" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#94a3b8" stopOpacity="0.8"/> {/* Slate-400 */}
+              <stop offset="100%" stopColor="#64748b" stopOpacity="0.5"/> {/* Slate-500 */}
+            </linearGradient>
           </defs>
 
-          {/* Background Grid Lines */}
-          <line x1={paddingX} y1={paddingY} x2={width - paddingX} y2={paddingY} stroke="#e5e7eb" strokeWidth="1" strokeDasharray="5,5" strokeOpacity="0.2" />
-          <line x1={paddingX} y1={paddingY + graphHeight/2} x2={width - paddingX} y2={paddingY + graphHeight/2} stroke="#e5e7eb" strokeWidth="1" strokeDasharray="5,5" strokeOpacity="0.2" />
-          <line x1={paddingX} y1={height - paddingY} x2={width - paddingX} y2={height - paddingY} stroke="#e5e7eb" strokeWidth="1" strokeDasharray="5,5" strokeOpacity="0.2" />
+          {/* Grid Lines */}
+          {[0, 0.5, 1].map((tick) => {
+              const y = paddingY + (graphHeight * tick);
+              const val = Math.round(maxY - (tick * rangeY));
+              return (
+                  <g key={tick}>
+                      <line x1={paddingX} y1={y} x2={width - paddingX} y2={y} stroke="#ffffff" strokeWidth="1" strokeOpacity="0.1" strokeDasharray="4,4" />
+                      <text x={paddingX - 10} y={y + 4} textAnchor="end" className="text-[10px] fill-slate-500 font-mono">{val}</text>
+                  </g>
+              )
+          })}
 
-          {/* The Filled Area */}
-          <path 
-            d={areaPath} 
-            fill="url(#chartGradient)" 
-          />
-
-          {/* The Line Graph */}
-          <polyline 
-            points={points} 
-            fill="none" 
-            stroke="#a32639" 
-            strokeWidth="4" 
-            strokeLinejoin="round"
-            strokeLinecap="round"
-            filter="url(#glow)"
-          />
-
-          {/* Data Points */}
+          {/* Bars */}
           {sortedData.map((d, i) => {
-            const cx = getX(i);
-            const cy = getY(d.score);
+            const x = getX(i);
+            const y = getY(d.score);
+            const h = height - paddingY - y; // Height from y down to bottom
             const isCurrent = d.year === currentVintage;
-            
+
             return (
               <g key={d.year}>
-                {/* Interaction Target (invisible larger circle) */}
-                <circle cx={cx} cy={cy} r="30" fill="transparent" />
-                
-                {/* Visual Dot */}
-                <circle 
-                  cx={cx} 
-                  cy={cy} 
-                  r={isCurrent ? 8 : 5} 
-                  fill={isCurrent ? "#a32639" : "#fff"} 
-                  stroke="#a32639" 
-                  strokeWidth={isCurrent ? 3 : 2}
-                  className="transition-all duration-300"
+                <rect
+                    x={x - (barWidth / 2)}
+                    y={y}
+                    width={barWidth}
+                    height={h}
+                    rx="4"
+                    fill={isCurrent ? "url(#barGradientCurrent)" : "url(#barGradientOther)"}
+                    className="transition-all duration-300 hover:opacity-100 opacity-90"
                 />
-
-                {/* Score Label (Above Dot) */}
+                
+                {/* Score Label (Top of Bar) */}
                 <text 
-                  x={cx} 
-                  y={cy - 20} 
+                  x={x} 
+                  y={y - 8} 
                   textAnchor="middle" 
-                  className={`text-2xl fill-white ${isCurrent ? 'font-bold' : 'font-medium opacity-70'}`}
-                  style={{ fontSize: '24px', fontFamily: '"Inter", sans-serif', fontWeight: 600 }}
+                  className={`text-sm ${isCurrent ? 'fill-white font-bold' : 'fill-slate-400 font-medium'}`}
                 >
                   {d.score}
                 </text>
 
                 {/* Year Label (Bottom) */}
                 <text 
-                  x={cx} 
-                  y={height} 
+                  x={x} 
+                  y={height - 5} 
                   textAnchor="middle" 
-                  className={`fill-slate-400 ${isCurrent ? 'font-bold fill-white' : 'font-medium opacity-60'}`}
-                  style={{ fontSize: '20px', fontFamily: '"Inter", sans-serif', fontWeight: 500 }}
+                  className={`text-xs ${isCurrent ? 'fill-gold-400 font-bold' : 'fill-slate-500 font-medium'}`}
                 >
                   {d.year}
                 </text>
@@ -146,13 +121,6 @@ export const VintageChart: React.FC<VintageChartProps> = ({ data, currentVintage
             );
           })}
         </svg>
-
-        {/* Current Vintage Indicator Overlay */}
-        {sortedData.find(d => d.year === currentVintage) && (
-            <div className="absolute top-2 right-2 bg-slate-800/80 backdrop-blur border border-white/10 px-3 py-1 rounded-full text-xs font-bold text-white shadow-sm pointer-events-none tracking-wide">
-                Comparing {currentVintage}
-            </div>
-        )}
       </div>
     </div>
   );

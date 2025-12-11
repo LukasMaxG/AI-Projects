@@ -44,6 +44,28 @@ const App: React.FC = () => {
     });
   };
 
+  // Centralized Data Update Logic (for User Ratings/Notes)
+  const handleWineUpdate = (updatedData: WineData) => {
+    // 1. Update current view if active
+    if (analysis.status === 'success' && analysis.data?.id === updatedData.id) {
+        setAnalysis(prev => ({ ...prev, data: updatedData }));
+    }
+
+    // 2. Update History List
+    setHistory(prev => {
+        const newHist = prev.map(item => (item.id === updatedData.id ? updatedData : item));
+        localStorage.setItem('wineHistory', JSON.stringify(newHist));
+        return newHist;
+    });
+
+    // 3. Update Favorites List
+    setFavorites(prev => {
+        const newFavs = prev.map(item => (item.id === updatedData.id ? updatedData : item));
+        localStorage.setItem('wineFavorites', JSON.stringify(newFavs));
+        return newFavs;
+    });
+  };
+
   const toggleFavorite = (wine: WineData) => {
     setFavorites(prev => {
       const isFav = prev.some(w => w.name === wine.name && w.vintage === wine.vintage);
@@ -307,6 +329,7 @@ const App: React.FC = () => {
                 imagePreview={imagePreview} 
                 isFavorite={isFavorite(analysis.data)}
                 onToggleFavorite={() => toggleFavorite(analysis.data!)}
+                onUpdateWine={handleWineUpdate}
             />
           </div>
         )}

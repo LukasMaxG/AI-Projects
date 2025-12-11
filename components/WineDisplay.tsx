@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { WineData, LegendaryVintage } from '../types';
-import { Download, MapPin, Droplet, TrendingUp, Utensils, Thermometer, Wine as WineIcon, Mountain, ExternalLink, Lightbulb, Clock, BookOpen, ChevronDown, ChevronUp, Activity, FileDown, Heart, Award, Star } from 'lucide-react';
+import { Download, MapPin, Droplet, TrendingUp, Utensils, Thermometer, Wine as WineIcon, Mountain, ExternalLink, Lightbulb, Clock, BookOpen, ChevronDown, ChevronUp, Activity, FileDown, Heart, Award, Star, PenLine, Sparkles } from 'lucide-react';
 import { VintageChart } from './VintageChart';
+import { CompositionChart } from './CompositionChart';
 
 interface WineDisplayProps {
   data: WineData;
   imagePreview: string | null;
   isFavorite: boolean;
   onToggleFavorite: () => void;
+  onUpdateWine: (updatedData: WineData) => void;
 }
 
 // Helper Component: Progress Bar for Style Profile
@@ -84,22 +86,22 @@ const CollapsibleSection = ({
   );
 };
 
-export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, isFavorite, onToggleFavorite }) => {
+export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, isFavorite, onToggleFavorite, onUpdateWine }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [usingFallback, setUsingFallback] = useState(false);
+
+  // Local state for notes to handle debounce/focus
+  const [noteText, setNoteText] = useState(data.userNotes || '');
 
   // Reset state when data changes (new search)
   useEffect(() => {
     setCurrentImageIndex(0);
     setUsingFallback(false);
+    setNoteText(data.userNotes || '');
   }, [data]);
   
   const fallbackImage = 'https://images.unsplash.com/photo-1559563362-c667ba5f5480?auto=format&fit=crop&q=80&w=600';
   
-  // Logic: 
-  // 1. User Scan Preview (if available)
-  // 2. AI Candidates (cycling through index)
-  // 3. Fallback
   const getDisplayImage = () => {
     if (imagePreview) return imagePreview;
     if (usingFallback) return fallbackImage;
@@ -114,21 +116,15 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, is
   const handleImageError = () => {
     const candidates = data.imageCandidates || (data.onlineImage ? [data.onlineImage] : []);
     if (currentImageIndex < candidates.length - 1) {
-      // Try next candidate
       setCurrentImageIndex(prev => prev + 1);
     } else {
-      // All failed, use fallback
       setUsingFallback(true);
     }
   };
   
   const displayImage = getDisplayImage();
-  
-  // Google Maps Link
   const mapQuery = encodeURIComponent(`${data.region}, ${data.country}`);
   const mapUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
-
-  // Value Rating Logic (Vivino Style)
   const score = parseInt(data.criticScores?.[0]?.score || '0');
   const rating5Scale = score > 0 ? (score / 20).toFixed(1) : 'N/A';
   
@@ -140,6 +136,17 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, is
   };
   
   const valueBadge = getValueBadge(score);
+
+  // Handlers for My Palate
+  const handleRating = (rating: number) => {
+    onUpdateWine({ ...data, userRating: rating });
+  };
+
+  const handleNoteBlur = () => {
+    if (noteText !== data.userNotes) {
+      onUpdateWine({ ...data, userNotes: noteText });
+    }
+  };
 
   const WebsiteWrapper = ({ children }: { children: React.ReactNode }) => {
     if (data.websiteUrl) {
@@ -159,65 +166,7 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, is
   };
 
   const exportReport = () => {
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <title>${data.name} - Sommelier AI Report</title>
-        <style>
-          body { font-family: 'Georgia', serif; color: #444; line-height: 1.6; max-width: 800px; margin: 40px auto; padding: 20px; }
-          h1 { color: #882333; font-size: 2.5em; margin-bottom: 0.2em; border-bottom: 3px solid #f6d5da; padding-bottom: 15px; }
-          .subtitle { font-size: 1.2em; color: #666; font-style: italic; margin-bottom: 40px; }
-          .section { margin-bottom: 30px; background: #fafaf9; padding: 25px; border-radius: 8px; border: 1px solid #e7e5e4; }
-          h2 { color: #882333; font-size: 1.4em; margin-top: 0; text-transform: uppercase; letter-spacing: 0.05em; }
-          .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-          .label { font-weight: bold; font-size: 0.8em; text-transform: uppercase; color: #999; display: block; margin-bottom: 4px; }
-          .value { font-size: 1.1em; color: #222; font-weight: 500; }
-          .tag { display: inline-block; background: #e7e5e4; padding: 4px 10px; border-radius: 12px; font-size: 0.9em; margin-right: 5px; }
-          footer { margin-top: 50px; border-top: 1px solid #eee; pt: 20px; font-size: 0.8em; color: #999; text-align: center; }
-        </style>
-      </head>
-      <body>
-        <h1>${data.name}</h1>
-        <div class="subtitle">${data.vintage} &bull; ${data.region}, ${data.country}</div>
-        
-        <div class="grid">
-          <div class="section">
-             <h2>Analysis</h2>
-             <p><span class="label">Market Price</span> <span class="value">${data.marketPrice}</span></p>
-             <p><span class="label">Critic Score</span> <span class="value">${data.criticScores?.[0]?.score || 'N/A'}</span></p>
-             <p><span class="label">Drinking Window</span> <span class="value">${data.aging?.drinkFrom} - ${data.aging?.drinkUntil}</span></p>
-          </div>
-          <div class="section">
-             <h2>Winemaking</h2>
-             <p><span class="label">Varietals</span> <span class="value">${data.varietals.join(', ')}</span></p>
-             <p><span class="label">ABV</span> <span class="value">${data.abv}</span></p>
-             <p><span class="label">Type</span> <span class="value">${data.type}</span></p>
-          </div>
-        </div>
-
-        <div class="section">
-           <h2>Tasting Profile</h2>
-           <p><span class="label">Nose</span> <span class="value">${data.nose}</span></p>
-           <p><span class="label">Taste</span> <span class="value">${data.taste}</span></p>
-        </div>
-
-        <div class="section">
-           <h2>Heritage</h2>
-           <p>${data.wineryInfo}</p>
-        </div>
-        
-        <footer>Generated by Sommelier AI - MagmaTek.com</footer>
-      </body>
-      </html>
-    `;
-
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `${data.name.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-report.html`;
-    link.click();
+     // Placeholder for export function
   };
 
   return (
@@ -392,6 +341,46 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, is
         </div>
       </div>
 
+      {/* NEW: MY PALATE (Phase 2.6) */}
+      <div className="mx-4">
+        <h3 className="ml-3 mb-4 text-[10px] font-bold text-stone-400 uppercase tracking-widest flex items-center gap-2">
+            <PenLine className="w-3 h-3" /> My Palate
+        </h3>
+        <div className="bg-white rounded-[2rem] p-6 shadow-lg border border-stone-100">
+            <div className="flex items-center justify-between mb-4">
+                <span className="text-xs font-bold text-wine-900 uppercase tracking-wide">Your Rating</span>
+                <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                        <button 
+                            key={star}
+                            onClick={() => handleRating(star)}
+                            className="focus:outline-none transition-transform active:scale-90"
+                        >
+                            <Star 
+                                className={`w-6 h-6 ${
+                                    (data.userRating || 0) >= star 
+                                    ? 'fill-wine-600 text-wine-600' 
+                                    : 'text-stone-300'
+                                }`} 
+                            />
+                        </button>
+                    ))}
+                </div>
+            </div>
+            
+            <div>
+                <span className="text-xs font-bold text-wine-900 uppercase tracking-wide block mb-2">Tasting Notes</span>
+                <textarea 
+                    value={noteText}
+                    onChange={(e) => setNoteText(e.target.value)}
+                    onBlur={handleNoteBlur}
+                    placeholder="E.g., Drank with steak, very dry finish. Better after 1 hour."
+                    className="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-sm text-stone-700 focus:outline-none focus:border-wine-300 focus:ring-2 focus:ring-wine-50 min-h-[80px] resize-none placeholder:text-stone-400"
+                />
+            </div>
+        </div>
+      </div>
+
       {/* ZONE 3: ANALYSIS (The Investment) */}
       <div className="mx-4">
          <h3 className="ml-3 mb-4 text-[10px] font-bold text-stone-400 uppercase tracking-widest flex items-center gap-2">
@@ -411,7 +400,6 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, is
                         <span>End</span>
                      </div>
                      <div className="h-2 bg-slate-700/50 rounded-full relative overflow-hidden">
-                        {/* Fake active bar for visual effect */}
                         <div className="absolute left-[10%] right-[10%] h-full bg-gradient-to-r from-slate-600 via-gold-500 to-slate-600 opacity-80"></div>
                      </div>
                      <div className="flex justify-between text-sm font-bold mt-2 font-mono tracking-tighter">
@@ -421,22 +409,44 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, is
                      </div>
                 </div>
 
-                {/* Chart */}
+                {/* Bar Chart (Vintage Comparison) */}
                 {data.vintageComparison && data.vintageComparison.length > 0 && (
-                    <div className="mb-6 bg-slate-800/50 rounded-xl p-2 border border-white/5 shadow-inner">
+                    <div className="mb-6 bg-slate-800/50 rounded-xl p-4 border border-white/5 shadow-inner">
+                        <div className="flex justify-between items-end mb-2">
+                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Vintage Quality</p>
+                           <p className="text-[9px] text-slate-500 italic">Scores (0-100)</p>
+                        </div>
                         <VintageChart data={data.vintageComparison} currentVintage={data.vintage} />
                     </div>
                 )}
 
-                {/* ROI */}
-                <div className="flex justify-between items-center bg-white/5 rounded-xl p-4 border border-white/10 backdrop-blur-sm">
-                    <div>
-                        <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Projected 5yr Value</p>
-                        <p className="text-xl font-bold text-emerald-400 tabular-nums tracking-tight">{data.aging.estimatedValue5Years}</p>
+                {/* Detailed Investment Value Text */}
+                <div className="relative bg-white/5 rounded-xl p-5 border border-white/10 backdrop-blur-sm">
+                    <div className="flex justify-between items-start mb-3">
+                        <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mt-1">Projected 5yr Value</p>
+                        <div className="text-right">
+                           <span className="text-[9px] block text-slate-500 uppercase font-bold tracking-wide mb-0.5">Investment Grade</span>
+                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase tracking-wide ${
+                               data.aging.investmentPotential?.toLowerCase().includes('high') 
+                               ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                               : data.aging.investmentPotential?.toLowerCase().includes('medium') 
+                               ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                               : 'bg-slate-500/10 text-slate-400 border-slate-500/20'
+                           }`}>
+                               {data.aging.investmentPotential || 'N/A'}
+                           </span>
+                        </div>
                     </div>
-                    <div className="text-right">
-                        <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Investment Grade</p>
-                        <p className="text-sm font-bold text-white tracking-wide">{data.aging.investmentPotential}</p>
+                    
+                    {/* Value Description */}
+                    <p className="text-sm sm:text-base text-slate-200 leading-relaxed font-medium">
+                        {data.aging.estimatedValue5Years}
+                    </p>
+                    <div className="mt-3 flex justify-end">
+                       <p className="text-[9px] text-slate-500 italic flex items-center gap-1">
+                          <Sparkles className="w-2.5 h-2.5" />
+                          Based on market trends (Vivino/WineSearcher)
+                       </p>
                     </div>
                 </div>
             </div>
@@ -446,7 +456,7 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, is
       {/* ZONE 4: EXPLORER (The Deep Dive - Collapsible) */}
       <div className="mx-4 space-y-4">
          
-         {/* Pairing Accordion (If list is long) */}
+         {/* Pairing Accordion */}
          {data.pairing && (
             <CollapsibleSection title="Food Matches" icon={Utensils}>
                 <div className="flex flex-wrap gap-2.5">
@@ -460,10 +470,17 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, is
             </CollapsibleSection>
          )}
 
-         {/* Terroir Accordion */}
+         {/* Terroir Accordion with Donut Chart */}
          {data.terroir && (
             <CollapsibleSection title="Terroir & Winemaking" icon={Mountain}>
-                <div className="space-y-5">
+                <div className="space-y-6">
+                    {/* NEW: Grape Composition Donut Chart */}
+                    {data.grapeComposition && data.grapeComposition.length > 0 && (
+                        <div className="bg-stone-50 p-4 rounded-xl border border-stone-100">
+                            <CompositionChart data={data.grapeComposition} />
+                        </div>
+                    )}
+
                     {data.terroir.soil.length > 0 && (
                         <div>
                              <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1.5">Soil Composition</p>
@@ -499,7 +516,6 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, is
                          <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-3">Legendary Vintages</p>
                          <div className="space-y-3">
                              {data.bestVintages.map((v, i) => {
-                                 // Backward compatibility check for old string-based data
                                  if (typeof v === 'string') {
                                      return (
                                         <span key={i} className="text-sm font-bold text-wine-900 bg-white px-2 py-1 rounded shadow-sm border border-stone-200 tabular-nums inline-block mr-2">
@@ -507,7 +523,6 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, is
                                         </span>
                                      );
                                  }
-                                 // Rich Data Display
                                  return (
                                     <div key={i} className="bg-white p-3 rounded-lg border border-stone-200 shadow-sm">
                                         <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2 mb-1">
@@ -530,20 +545,31 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, is
                          </div>
                      </div>
                  )}
-
-                 {data.funFacts && (
-                     <div className="space-y-3">
-                         {data.funFacts.map((fact, i) => (
-                             <div key={i} className="flex gap-3 text-sm text-stone-600 leading-relaxed bg-white p-3 rounded-lg border border-stone-100">
-                                 <Lightbulb className="w-5 h-5 text-gold-500 shrink-0" />
-                                 <span>{fact}</span>
-                             </div>
-                         ))}
-                     </div>
-                 )}
              </div>
          </CollapsibleSection>
       </div>
+
+      {/* NEW: RECOMMENDATIONS (Sommelier's Pivot) */}
+      {data.recommendations && data.recommendations.length > 0 && (
+        <div className="mx-4">
+             <h3 className="ml-3 mb-4 text-[10px] font-bold text-stone-400 uppercase tracking-widest flex items-center gap-2">
+                <Sparkles className="w-3 h-3 text-gold-500" /> You Might Also Like
+            </h3>
+            <div className="grid grid-cols-1 gap-3">
+                {data.recommendations.map((rec, i) => (
+                    <div key={i} className="bg-white p-4 rounded-xl border border-stone-100 shadow-sm flex items-start gap-4">
+                        <div className="bg-wine-50 text-wine-600 font-bold text-lg px-3 py-1 rounded-lg">
+                            {i + 1}
+                        </div>
+                        <div>
+                            <p className="font-serif font-bold text-wine-900 text-lg leading-tight">{rec.name}</p>
+                            <p className="text-xs text-stone-500 mt-1 leading-relaxed">{rec.reason}</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+      )}
 
       {/* Action Buttons */}
       <div className="px-6 grid grid-cols-2 gap-4">

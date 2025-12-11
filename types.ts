@@ -42,6 +42,16 @@ export interface LegendaryVintage {
   awards: string[];
 }
 
+export interface GrapeComposition {
+  grape: string;
+  percentage: number; // 0-100
+}
+
+export interface WineRecommendation {
+  name: string;
+  reason: string; // "Similar Style" or "Hidden Gem"
+}
+
 export interface WineData {
   id?: string; // Unique ID for history
   timestamp?: number; // Time of scan
@@ -75,6 +85,12 @@ export interface WineData {
   vintageComparison: VintageScore[];
   aging: AgingData;
   pairing: PairingData;
+  
+  // Phase 2.6: Deep Analysis & User Data
+  grapeComposition?: GrapeComposition[]; // Estimated blend percentages
+  recommendations?: WineRecommendation[]; // AI suggestions
+  userRating?: number; // 0-5 stars set by user
+  userNotes?: string; // Personal notes set by user
 }
 
 export interface AnalysisState {

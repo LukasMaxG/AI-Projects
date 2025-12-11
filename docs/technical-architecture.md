@@ -50,25 +50,23 @@
 *   Reduces code duplication.
 *   Ensures the UI component (`WineDisplay`) works identically regardless of how the user initiated the search.
 
-### 7. Zero-Dependency Visualization
-**Decision**: We implemented the `VintageChart` using raw **SVG** and React state, rather than installing a charting library (like Recharts or Chart.js).
+### 7. Zero-Dependency Visualization (SVG)
+**Decision**: We implemented charts (Vintage Chart, Composition Donut) using raw **SVG** and React state.
 **Reasoning**:
-*   **Performance**: Keeps the bundle size extremely small (saving ~30-100kb).
+*   **Performance**: Keeps the bundle size extremely small (saving ~30-100kb) compared to libraries like Recharts.
 *   **Control**: Allows for pixel-perfect custom styling (gradients, glowing lines) that matches the app's premium aesthetic exactly.
-*   **Simplicity**: We only need one specific type of chart (Area/Line), making a full library overkill.
 
 ### 8. Deep-Dive Data Modeling
 **Decision**: The `WineData` type uses nested objects (e.g., `TerroirData`, `CriticScore[]`, `LegendaryVintage[]`) rather than long text description strings.
 **Reasoning**:
 *   **UI Flexibility**: Allows us to render specific data points as "badges" (e.g., "Organic" tag), icons (Soil types), or Cards (Vintage Awards) rather than just dumping a paragraph of text.
 *   **AI Instruction**: Forcing the AI to fill these specific buckets ensures it actually performs the research for each specific aspect (Soil, Oak, Critics).
-*   **Backward Compatibility**: The code includes checks (e.g., `typeof v === 'string'`) to gracefully handle older history items stored before the data model was upgraded.
 
 ### 9. Multi-Source Heuristic Image Search
-**Decision**: Instead of asking for a single image URL, we instruct the AI to generate a list of 4-6 "Candidate URLs" from specific high-probability sources.
+**Decision**: We instruct the AI to generate a list of 4-6 "Candidate URLs" from specific high-probability sources, prioritizing "Winery Estate" shots.
 **Reasoning**:
 *   **Reliability**: Hotlinking protection and 404s are common with web images. A single source has a high failure rate.
-*   **Optimization**: We reduced this from 10 to ~5 to improve generation speed while maintaining enough redundancy for the retry logic.
+*   **Speed vs Coverage**: We optimized this down from 10 to ~5 candidates. This provides enough redundancy for the retry logic without causing the AI to timeout while searching for too many images.
 
 ### 10. Client-Side Persistence (Favorites & History)
 **Decision**: We utilize browser `localStorage` to manage the "Favorites" and "Recent History" collections.
@@ -76,3 +74,15 @@
 *   **Immediate Availability**: Data is available instantly on app load without network requests.
 *   **Privacy**: User data remains entirely on their device.
 *   **Simplicity**: Avoids the complexity of user authentication and database schemas for the MVP phase.
+
+### 11. Hybrid Data Model (AI + User)
+**Decision**: The `WineData` object serves as a hybrid container, storing both the immutable AI-retrieved facts (e.g. Vintage, Grapes) and the mutable user inputs (e.g. `userRating`, `userNotes`).
+**Reasoning**:
+*   **Simplicity**: Keeps the architecture flat and avoids needing a separate "User Meta" database table or object.
+*   **Portability**: When a user exports/saves a wine, their personal notes travel with the object automatically.
+
+### 12. Domain-Specific Visualization Strategy
+**Decision**: We choose specific chart types for semantic correctness rather than visual uniformity.
+**Reasoning**:
+*   **Donut Chart (Composition)**: Used for the Grape Blend to visualize "Parts to Whole".
+*   **Bar Chart (Vintage Analysis)**: Replaced the initial Area Chart to better visualize "Discrete" time series data (Vintage Scores), allowing for easier year-to-year comparison.
