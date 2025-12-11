@@ -30,6 +30,12 @@ TASKS:
 10. HISTORY: Origins, fun facts.
     LEGENDARY VINTAGES: Identify 2-3 best years with notes/awards.
 11. PIVOT: Recommend 2 similar wines (1 similar style/price, 1 hidden gem/value).
+12. EDUCATION:
+    - CLIMATE: Brief type (e.g. "Mediterranean").
+    - GEOGRAPHY: Key feature (e.g. "Volcanic soil").
+    - VIBE: 1-sentence analogy (e.g. "Think of this like the 'Texas of Italy'").
+    - LABEL DECODER: Define 2-3 technical terms on label (Riserva, DOCG, Sur Lie, etc).
+    - PRONUNCIATION: Native spelling + Phonetic (e.g. Gewürztraminer -> Guh-VURTZ-tra-mee-ner).
 
 JSON STRUCTURE:
 {
@@ -89,7 +95,19 @@ JSON STRUCTURE:
   },
   "recommendations": [
     { "name": "Wine Name", "reason": "Similar power and structure..." }
-  ]
+  ],
+  "education": {
+    "climate": "Mediterranean",
+    "geography": "Galestro Soil",
+    "vibe": "The 'Texas of Italy' - big and bold.",
+    "labelTerms": [
+      { "term": "Riserva", "definition": "Aged for at least 2 years..." }
+    ],
+    "pronunciation": {
+      "native": "Chianti Classico",
+      "phonetic": "Key-AHN-tee CLAH-see-ko"
+    }
+  }
 }
 `;
 

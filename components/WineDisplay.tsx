@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { WineData, LegendaryVintage } from '../types';
-import { Download, MapPin, Droplet, TrendingUp, Utensils, Thermometer, Wine as WineIcon, Mountain, ExternalLink, Lightbulb, Clock, BookOpen, ChevronDown, ChevronUp, Activity, FileDown, Heart, Award, Star, PenLine, Sparkles } from 'lucide-react';
+import { Download, MapPin, Droplet, TrendingUp, Utensils, Thermometer, Wine as WineIcon, Mountain, ExternalLink, Lightbulb, Clock, BookOpen, ChevronDown, ChevronUp, Activity, FileDown, Heart, Award, Star, PenLine, Sparkles, GraduationCap, Sun } from 'lucide-react';
 import { VintageChart } from './VintageChart';
 import { CompositionChart } from './CompositionChart';
 
@@ -406,6 +406,58 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, is
             )}
         </div>
       </div>
+
+      {/* ZONE 2.5: EDUCATION (New) */}
+      {data.education && (
+        <div className="mx-4 mb-6">
+            <CollapsibleSection title="Wine Primer & Education" icon={GraduationCap}>
+            
+            {/* Pronunciation */}
+            {data.education.pronunciation && (
+                <div className="mb-6 bg-stone-50 p-4 rounded-xl border border-stone-100">
+                    <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1">How to say it</p>
+                    <div className="flex flex-col">
+                        <span className="text-xl font-serif font-bold text-wine-900">{data.education.pronunciation.native}</span>
+                        <span className="text-sm text-stone-500 font-mono tracking-wide">{data.education.pronunciation.phonetic}</span>
+                    </div>
+                </div>
+            )}
+
+            {/* Terroir Snapshot */}
+            <div className="mb-6">
+                <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-3">Terroir Snapshot</p>
+                <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-orange-50 p-3 rounded-lg border border-orange-100">
+                        <Sun className="w-4 h-4 text-orange-400 mb-2" />
+                        <p className="text-xs font-bold text-orange-800">{data.education.climate}</p>
+                    </div>
+                    <div className="bg-emerald-50 p-3 rounded-lg border border-emerald-100">
+                        <Mountain className="w-4 h-4 text-emerald-400 mb-2" />
+                        <p className="text-xs font-bold text-emerald-800">{data.education.geography}</p>
+                    </div>
+                </div>
+                <div className="mt-3 bg-stone-50 p-3 rounded-lg border border-stone-100 italic text-sm text-stone-600 font-medium leading-relaxed">
+                    "{data.education.vibe}"
+                </div>
+            </div>
+
+            {/* Label Decoder */}
+            {data.education.labelTerms && data.education.labelTerms.length > 0 && (
+                <div>
+                    <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-3">Label Decoder</p>
+                    <div className="space-y-3">
+                        {data.education.labelTerms.map((term, i) => (
+                            <div key={i} className="pl-3 border-l-2 border-wine-100">
+                                <span className="font-bold text-wine-900 text-sm block mb-0.5">{term.term}</span>
+                                <span className="text-stone-600 text-xs leading-relaxed">{term.definition}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+            </CollapsibleSection>
+        </div>
+      )}
 
       {/* NEW: MY PALATE (Phase 2.6) */}
       <div className="mx-4">

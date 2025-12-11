@@ -52,6 +52,22 @@ export interface WineRecommendation {
   reason: string; // "Similar Style" or "Hidden Gem"
 }
 
+export interface LabelTerm {
+  term: string;
+  definition: string;
+}
+
+export interface EducationalInsight {
+  climate: string; // e.g. "Mediterranean (Hot Summers)"
+  geography: string; // e.g. "Galestro soil, high altitude"
+  vibe: string; // e.g. "Think of this region like the 'Texas of Italy'"
+  labelTerms: LabelTerm[];
+  pronunciation: {
+    native: string;
+    phonetic: string; // e.g. "Guh-VURTZ-tra-mee-ner"
+  };
+}
+
 export interface WineData {
   id?: string; // Unique ID for history
   timestamp?: number; // Time of scan
@@ -91,6 +107,9 @@ export interface WineData {
   recommendations?: WineRecommendation[]; // AI suggestions
   userRating?: number; // 0-5 stars set by user
   userNotes?: string; // Personal notes set by user
+  
+  // Phase 2.7: Education (Winography Style)
+  education?: EducationalInsight;
 }
 
 export interface AnalysisState {
