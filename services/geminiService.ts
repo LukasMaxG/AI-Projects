@@ -16,7 +16,7 @@ TASKS:
 3. CRITICS: Scores (Parker, Spectator, etc).
 4. TERROIR: Soil, oak, farming. 
    - ESTIMATE BLEND: % of each grape (must sum to 100%).
-5. VINTAGE: Compare requested vintage vs 2 others.
+5. VINTAGE: Compare requested vintage vs 4 other recent vintages (total 5 years) to show quality trend.
 6. INVEST: 
    - Drinking window (Start, Peak, End).
    - MARKET VALUE: Research Vivino/WineSearcher/CellarTracker for 5yr value prediction.

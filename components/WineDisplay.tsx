@@ -167,10 +167,17 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, is
     }
   };
 
+  const ensureAbsoluteUrl = (url: string) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    return `https://${url}`;
+  };
+
   const WebsiteWrapper = ({ children }: { children: React.ReactNode }) => {
     if (data.websiteUrl) {
+      const safeUrl = ensureAbsoluteUrl(data.websiteUrl);
       return (
-        <a href={data.websiteUrl} target="_blank" rel="noopener noreferrer" className="group relative block cursor-pointer">
+        <a href={safeUrl} target="_blank" rel="noopener noreferrer" className="group relative block cursor-pointer">
           {children}
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 rounded-xl">
              <div className="bg-white/95 px-3 py-1.5 rounded-full shadow-lg flex items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-all backdrop-blur-sm">
@@ -304,8 +311,8 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, is
 
                 {/* Price Column */}
                 <div className="flex-1 min-w-0 flex flex-col justify-center">
-                     <p className="text-[9px] text-stone-400 uppercase tracking-widest font-bold mb-0.5">Market Price</p>
-                     <p className="text-lg sm:text-xl font-serif font-bold text-wine-900 tabular-nums tracking-tight leading-tight whitespace-normal">{data.marketPrice}</p>
+                     <p className="text-[10px] text-stone-500 uppercase tracking-widest font-bold mb-1">Market Price</p>
+                     <p className="text-xl sm:text-2xl font-sans font-bold text-wine-950 tabular-nums tracking-tight leading-tight whitespace-normal break-words">{data.marketPrice}</p>
                 </div>
                 
                 {/* Divider */}
@@ -569,6 +576,19 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, is
                  <p className="text-[1.05rem] text-stone-700 leading-loose font-serif italic border-l-2 border-wine-200 pl-4">
                     "{data.wineryInfo}"
                  </p>
+
+                 {/* Explicit Visit Website Button */}
+                 {data.websiteUrl && (
+                    <a 
+                      href={ensureAbsoluteUrl(data.websiteUrl)} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-wine-600 font-bold uppercase text-[10px] tracking-widest hover:text-wine-800 transition-colors bg-wine-50 px-3 py-2 rounded-lg border border-wine-100"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      Visit Official Website
+                    </a>
+                 )}
                  
                  {data.bestVintages && (
                      <div className="bg-stone-50 p-4 rounded-xl border border-stone-100">
@@ -603,6 +623,24 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, is
                              })}
                          </div>
                      </div>
+                 )}
+
+                 {/* Fun Facts / Trivia */}
+                 {data.funFacts && data.funFacts.length > 0 && (
+                    <div className="bg-amber-50 p-4 rounded-xl border border-amber-100">
+                        <div className="flex items-center gap-2 mb-3">
+                            <Lightbulb className="w-4 h-4 text-amber-500" />
+                            <p className="text-[10px] font-bold text-amber-700 uppercase tracking-widest">Did you know?</p>
+                        </div>
+                        <ul className="space-y-2">
+                            {data.funFacts.map((fact, i) => (
+                                <li key={i} className="text-sm text-stone-700 font-medium leading-relaxed flex gap-2">
+                                    <span className="text-amber-400 font-bold">•</span>
+                                    {fact}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
                  )}
              </div>
          </CollapsibleSection>
