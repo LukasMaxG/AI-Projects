@@ -6,6 +6,42 @@ import { analyzeWineLabel, searchWineByName } from './services/geminiService';
 import { AnalysisState, WineData } from './types';
 import { Loader2, AlertCircle, Search, ArrowRight, Sparkles, Clock, ChevronDown, ChevronUp, Heart } from 'lucide-react';
 
+// Custom Modern Wine Bottle Icon for Fallbacks
+const WineBottleIcon = ({ className }: { className?: string }) => (
+  <svg 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="1.5" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+  >
+    <path d="M9 2h6" />
+    <path d="M12 2v5" />
+    <path d="M8 9h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2Z" />
+    <path d="M8 14h8" opacity="0.3" />
+  </svg>
+);
+
+// Thumbnail component to handle image loading errors in the list
+const WineListItemThumbnail = ({ src }: { src?: string }) => {
+  const [error, setError] = useState(false);
+
+  if (!src || error) {
+    return <WineBottleIcon className="w-5 h-5 text-wine-300" />;
+  }
+
+  return (
+    <img 
+      src={src} 
+      alt="" 
+      className="w-full h-full object-cover" 
+      onError={() => setError(true)}
+    />
+  );
+};
+
 const App: React.FC = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<AnalysisState>({ status: 'idle' });
@@ -228,14 +264,8 @@ const App: React.FC = () => {
                                         onClick={() => loadFromHistory(item)}
                                         className="p-4 flex items-center gap-4 hover:bg-wine-50 cursor-pointer transition-colors"
                                     >
-                                        <div className="w-12 h-12 bg-wine-100 rounded-xl overflow-hidden shrink-0 border border-wine-200">
-                                            {item.onlineImage ? (
-                                                <img src={item.onlineImage} alt="" className="w-full h-full object-cover" />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-wine-400 font-serif font-bold text-xs">
-                                                    {item.vintage}
-                                                </div>
-                                            )}
+                                        <div className="w-12 h-12 bg-wine-50 rounded-xl overflow-hidden shrink-0 border border-wine-100 flex items-center justify-center">
+                                            <WineListItemThumbnail src={item.onlineImage} />
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className="font-semibold text-wine-900 text-base truncate tracking-tight">{item.name}</p>

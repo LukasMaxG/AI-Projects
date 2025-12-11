@@ -85,4 +85,10 @@
 **Decision**: We choose specific chart types for semantic correctness rather than visual uniformity.
 **Reasoning**:
 *   **Donut Chart (Composition)**: Used for the Grape Blend to visualize "Parts to Whole".
-*   **Bar Chart (Vintage Analysis)**: Replaced the initial Area Chart to better visualize "Discrete" time series data (Vintage Scores), allowing for easier year-to-year comparison.
+*   **Line/Area Graph (Vintage Analysis)**: Replaced the initial Bar Chart to better visualize "Trends over Time" and quality trajectories.
+
+### 13. Contextual Education Layer
+**Decision**: We use the LLM to synthesize educational content (Climate, Pronunciation, Jargon Definitions) on the fly based on the specific wine context.
+**Reasoning**:
+*   **Scalability**: Avoids maintaining a massive static database of every wine region and technical term.
+*   **Relevance**: The "Vibe" and "Definitions" are tailored specifically to the bottle scanned (e.g., explaining "Riserva" only if the bottle *is* a Riserva).
