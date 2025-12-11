@@ -12,6 +12,15 @@ interface WineDisplayProps {
   onUpdateWine: (updatedData: WineData) => void;
 }
 
+// Map common country names to ISO codes for FlagCDN
+const countryCodeMap: Record<string, string> = {
+  'italy': 'it', 'france': 'fr', 'spain': 'es', 'united states': 'us', 'usa': 'us',
+  'argentina': 'ar', 'chile': 'cl', 'australia': 'au', 'germany': 'de', 'portugal': 'pt',
+  'south africa': 'za', 'new zealand': 'nz', 'austria': 'at', 'hungary': 'hu', 'greece': 'gr',
+  'china': 'cn', 'japan': 'jp', 'uruguay': 'uy', 'brazil': 'br', 'canada': 'ca', 'switzerland': 'ch',
+  'united kingdom': 'gb', 'england': 'gb'
+};
+
 // Helper Component: Progress Bar for Style Profile
 const StyleMeter = ({ label, value }: { label: string; value: string }) => {
   const getPercentage = (val: string) => {
@@ -101,16 +110,26 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, is
   }, [data]);
   
   const fallbackImage = 'https://images.unsplash.com/photo-1559563362-c667ba5f5480?auto=format&fit=crop&q=80&w=600';
+
+  const getFlagUrl = () => {
+      if (!data.country) return null;
+      const key = data.country.toLowerCase().trim();
+      if (countryCodeMap[key]) return `https://flagcdn.com/w640/${countryCodeMap[key]}.png`;
+      return null;
+  };
   
   const getDisplayImage = () => {
     if (imagePreview) return imagePreview;
-    if (usingFallback) return fallbackImage;
+    if (usingFallback) {
+      // Priority: Flag -> Generic Fallback
+      return getFlagUrl() || fallbackImage;
+    }
     
     const candidates = data.imageCandidates || (data.onlineImage ? [data.onlineImage] : []);
     if (candidates.length > 0 && currentImageIndex < candidates.length) {
       return candidates[currentImageIndex];
     }
-    return fallbackImage;
+    return getFlagUrl() || fallbackImage;
   };
 
   const handleImageError = () => {
@@ -166,7 +185,47 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, is
   };
 
   const exportReport = () => {
-     // Placeholder for export function
+      // Placeholder for export function
+      const htmlContent = `
+        <html>
+          <head>
+            <title>${data.name}</title>
+            <style>
+              body { font-family: sans-serif; padding: 20px; line-height: 1.6; color: #333; }
+              h1 { color: #882333; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+              h2 { color: #555; margin-top: 20px; font-size: 18px; text-transform: uppercase; letter-spacing: 1px; }
+              .badge { background: #eee; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+              .stat { display: flex; justify-content: space-between; max-width: 300px; border-bottom: 1px dashed #ccc; padding: 4px 0; }
+              .notes { background: #f9f9f9; padding: 15px; border-left: 4px solid #882333; font-style: italic; }
+            </style>
+          </head>
+          <body>
+            <h1>${data.name}</h1>
+            <p><strong>Vintage:</strong> ${data.vintage} | <strong>Region:</strong> ${data.region}, ${data.country}</p>
+            <p><strong>Market Price:</strong> ${data.marketPrice} | <strong>Score:</strong> ${data.criticScores?.[0]?.score || 'N/A'}</p>
+            
+            <h2>Sensory Profile</h2>
+            <div class="notes">"${data.nose}. ${data.taste}"</div>
+            
+            <h2>Technical Details</h2>
+            <div class="stat"><span>Type:</span> <span>${data.type}</span></div>
+            <div class="stat"><span>ABV:</span> <span>${data.abv}</span></div>
+            <div class="stat"><span>Grapes:</span> <span>${data.varietals.join(', ')}</span></div>
+            
+            <h2>Winery Info</h2>
+            <p>${data.wineryInfo}</p>
+          </body>
+        </html>
+      `;
+      
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const item = new ClipboardItem({ "text/html": blob });
+      navigator.clipboard.write([item]).then(() => {
+          alert("Report copied to clipboard! You can paste it into Google Docs.");
+      }).catch(err => {
+          console.error("Copy failed", err);
+          alert("Failed to copy. Please try again.");
+      });
   };
 
   return (
@@ -177,110 +236,110 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, is
         {/* Decorative BG */}
         <div className="absolute -top-10 -right-10 w-40 h-40 bg-wine-50 rounded-full blur-3xl"></div>
 
-        <div className="relative z-10 flex gap-4">
-            {/* Left: Image (Winery or Bottle) */}
-            <div className="w-28 sm:w-1/3 shrink-0">
-               <WebsiteWrapper>
-                  <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-stone-100 border border-stone-100 shadow-md relative flex items-center justify-center group">
-                    <img 
-                      src={displayImage} 
-                      onError={handleImageError}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
-                      alt={data.name} 
-                    />
-                    {data.vintage && (
-                        <div className="absolute top-2 left-2 bg-white/90 text-wine-900 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm backdrop-blur-md">
-                            {data.vintage}
-                        </div>
-                    )}
-                  </div>
-               </WebsiteWrapper>
-            </div>
+        <div className="relative z-10">
+            <div className="flex gap-4 mb-4">
+                {/* Left: Image (Winery, Bottle, or Flag) */}
+                <div className="w-28 sm:w-1/3 shrink-0">
+                   <WebsiteWrapper>
+                      <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-stone-100 border border-stone-100 shadow-md relative flex items-center justify-center group">
+                        <img 
+                          src={displayImage} 
+                          onError={handleImageError}
+                          className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${displayImage?.includes('flagcdn') ? 'opacity-90' : ''}`} 
+                          alt={data.name} 
+                        />
+                        {data.vintage && (
+                            <div className="absolute top-2 left-2 bg-white/90 text-wine-900 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm backdrop-blur-md">
+                                {data.vintage}
+                            </div>
+                        )}
+                      </div>
+                   </WebsiteWrapper>
+                </div>
 
-            {/* Right: Info */}
-            <div className="flex-1 flex flex-col min-w-0">
-                <a 
-                   href={mapUrl}
-                   target="_blank"
-                   rel="noopener noreferrer"
-                   className="flex items-center gap-1.5 text-wine-600 hover:text-wine-800 text-[10px] font-bold uppercase tracking-widest mb-1 cursor-pointer transition-colors"
-                >
-                    <MapPin className="w-3 h-3" />
-                    <span className="line-clamp-1 underline decoration-dotted underline-offset-2">{data.country}</span>
-                </a>
-                <h2 className="text-lg sm:text-2xl font-serif font-bold text-wine-950 leading-tight tracking-tight mb-1.5 line-clamp-2">
-                    {data.name}
-                </h2>
-                
-                {/* Region / Grape Pills */}
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                    <span className="px-2 py-0.5 bg-wine-50 text-wine-900 text-[9px] font-bold rounded-md uppercase tracking-wide border border-wine-100 truncate max-w-full">
-                        {data.region}
-                    </span>
-                    {data.varietals.slice(0, 1).map(v => (
-                         <span key={v} className="px-2 py-0.5 bg-stone-100 text-stone-600 text-[9px] font-bold rounded-md uppercase tracking-wide border border-stone-200">
-                            {v}
+                {/* Right: Info */}
+                <div className="flex-1 flex flex-col min-w-0">
+                    <a 
+                       href={mapUrl}
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       className="flex items-center gap-1.5 text-wine-600 hover:text-wine-800 text-[10px] font-bold uppercase tracking-widest mb-1 cursor-pointer transition-colors"
+                    >
+                        <MapPin className="w-3 h-3" />
+                        <span className="line-clamp-1 underline decoration-dotted underline-offset-2">{data.country}</span>
+                    </a>
+                    <h2 className="text-lg sm:text-2xl font-serif font-bold text-wine-950 leading-tight tracking-tight mb-1.5 line-clamp-2">
+                        {data.name}
+                    </h2>
+                    
+                    {/* Region / Grape Pills */}
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                        <span className="px-2 py-0.5 bg-wine-50 text-wine-900 text-[9px] font-bold rounded-md uppercase tracking-wide border border-wine-100 truncate max-w-full">
+                            {data.region}
                         </span>
-                    ))}
-                </div>
+                        {data.varietals.slice(0, 1).map(v => (
+                             <span key={v} className="px-2 py-0.5 bg-stone-100 text-stone-600 text-[9px] font-bold rounded-md uppercase tracking-wide border border-stone-200">
+                                {v}
+                            </span>
+                        ))}
+                    </div>
 
-                {/* Wine Description */}
-                <div className="mb-2.5">
-                   <p className="text-[10px] sm:text-xs text-stone-500 font-medium leading-relaxed line-clamp-2">
-                     A {data.styleProfile?.body ? data.styleProfile.body.toLowerCase() : 'classic'} {data.type.toLowerCase()} with {data.abv}. 
-                     Notes of {data.nose.split(',').slice(0, 2).join(', ')}.
-                   </p>
-                </div>
-
-                {/* Modern Value Indicator & Price Card */}
-                <div className="mt-auto">
-                    <div className="bg-stone-50 rounded-xl p-2 border border-stone-100 flex items-center justify-between shadow-sm gap-2 relative overflow-hidden">
-                        
-                        {/* Decorative Gradient for high value */}
-                        {valueBadge?.label === 'Iconic' && (
-                             <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-gold-100/50 to-transparent rounded-bl-3xl pointer-events-none"></div>
-                        )}
-
-                        {/* Price Column */}
-                        <div className="flex-1 min-w-0 flex flex-col justify-center">
-                             <p className="text-[8px] text-stone-400 uppercase tracking-widest font-bold mb-0.5">Market Price</p>
-                             <p className="text-sm sm:text-lg font-serif font-bold text-wine-900 tabular-nums tracking-tight leading-tight whitespace-normal">{data.marketPrice}</p>
-                        </div>
-                        
-                        {/* Divider */}
-                        <div className="w-px h-8 bg-stone-200/80"></div>
-                        
-                        {/* Rating Column */}
-                        {score > 0 ? (
-                            <div className="flex flex-col items-end shrink-0 z-10">
-                                <div className="flex items-center gap-1.5">
-                                    <div className="flex items-baseline gap-1">
-                                        <span className="text-xl sm:text-2xl font-bold text-wine-900 leading-none">{rating5Scale}</span>
-                                    </div>
-                                    <div className="bg-wine-900 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm min-w-[24px] text-center">
-                                        {score}
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-1 mt-0.5">
-                                    <div className="flex -space-x-0.5">
-                                        {[1,2,3,4,5].map(i => (
-                                            <Star key={i} className={`w-2.5 h-2.5 ${i <= Math.round(Number(rating5Scale)) ? 'fill-gold-500 text-gold-500' : 'text-stone-300'}`} />
-                                        ))}
-                                    </div>
-                                    {valueBadge && (
-                                        <span className={`text-[7px] font-bold px-1 py-0.5 rounded uppercase tracking-wide border bg-white ${valueBadge.color.replace('bg-', 'text-').replace('text-', 'border-')}`}>
-                                            {valueBadge.label}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="text-right py-1">
-                                <span className="text-xs text-stone-400 italic">No rating</span>
-                            </div>
-                        )}
+                    {/* Wine Description */}
+                    <div className="mb-2.5">
+                       <p className="text-[10px] sm:text-xs text-stone-500 font-medium leading-relaxed line-clamp-3">
+                         A {data.styleProfile?.body ? data.styleProfile.body.toLowerCase() : 'classic'} {data.type.toLowerCase()} with {data.abv}. 
+                         Notes of {data.nose.split(',').slice(0, 2).join(', ')}.
+                       </p>
                     </div>
                 </div>
+            </div>
+
+            {/* Modern Value Indicator & Price Card - Full Width (Stretched Left) */}
+            <div className="bg-stone-50 rounded-xl p-3 border border-stone-100 flex items-center justify-between shadow-sm gap-4 relative overflow-hidden">
+                
+                {/* Decorative Gradient for high value */}
+                {valueBadge?.label === 'Iconic' && (
+                     <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-gold-100/50 to-transparent rounded-bl-full pointer-events-none"></div>
+                )}
+
+                {/* Price Column */}
+                <div className="flex-1 min-w-0 flex flex-col justify-center">
+                     <p className="text-[9px] text-stone-400 uppercase tracking-widest font-bold mb-0.5">Market Price</p>
+                     <p className="text-lg sm:text-xl font-serif font-bold text-wine-900 tabular-nums tracking-tight leading-tight whitespace-normal">{data.marketPrice}</p>
+                </div>
+                
+                {/* Divider */}
+                <div className="w-px h-10 bg-stone-200/80"></div>
+                
+                {/* Rating Column */}
+                {score > 0 ? (
+                    <div className="flex flex-col items-end shrink-0 z-10">
+                        <div className="flex items-center gap-2">
+                            <div className="flex items-baseline gap-1">
+                                <span className="text-2xl sm:text-3xl font-bold text-wine-900 leading-none tracking-tighter">{rating5Scale}</span>
+                            </div>
+                            <div className="bg-wine-900 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm min-w-[28px] text-center self-start mt-1">
+                                {score}
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                            <div className="flex -space-x-0.5">
+                                {[1,2,3,4,5].map(i => (
+                                    <Star key={i} className={`w-3 h-3 ${i <= Math.round(Number(rating5Scale)) ? 'fill-gold-500 text-gold-500' : 'text-stone-300'}`} />
+                                ))}
+                            </div>
+                            {valueBadge && (
+                                <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide border bg-white ${valueBadge.color.replace('bg-', 'text-').replace('text-', 'border-')}`}>
+                                    {valueBadge.label}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                ) : (
+                    <div className="text-right py-1">
+                        <span className="text-xs text-stone-400 italic">No rating</span>
+                    </div>
+                )}
             </div>
         </div>
       </div>
