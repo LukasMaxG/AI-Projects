@@ -53,6 +53,7 @@ const StyleMeter = ({ label, value }: { label: string; value: string }) => {
   );
 };
 
+// Fix: Made children optional to resolve "missing children" type errors
 const CollapsibleSection = ({ 
   title, 
   icon: Icon, 
@@ -61,7 +62,7 @@ const CollapsibleSection = ({
 }: { 
   title: string; 
   icon: React.ElementType; 
-  children: React.ReactNode;
+  children?: React.ReactNode;
   defaultOpen?: boolean;
 }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -185,7 +186,8 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, is
     return `https://${url}`;
   };
 
-  const WebsiteWrapper = ({ children }: { children: React.ReactNode }) => {
+  // Fix: Made children optional to resolve "missing children" type errors
+  const WebsiteWrapper = ({ children }: { children?: React.ReactNode }) => {
     if (data.websiteUrl) {
       const safeUrl = ensureAbsoluteUrl(data.websiteUrl);
       return (

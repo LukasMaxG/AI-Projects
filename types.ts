@@ -123,8 +123,15 @@ export interface CellarItem {
   addedAt: number;
 }
 
+export interface WineMatch {
+  name: string;
+  vintage: string;
+  region: string;
+}
+
 export interface AnalysisState {
-  status: 'idle' | 'analyzing' | 'success' | 'error';
+  status: 'idle' | 'analyzing' | 'selecting' | 'success' | 'error';
   data?: WineData;
+  choices?: WineMatch[];
   error?: string;
 }

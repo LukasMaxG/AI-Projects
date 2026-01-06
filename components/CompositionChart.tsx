@@ -8,7 +8,6 @@ interface CompositionChartProps {
 export const CompositionChart: React.FC<CompositionChartProps> = ({ data }) => {
   if (!data || data.length === 0) return null;
 
-  // Calculate percentages and arc paths
   const total = data.reduce((acc, curr) => acc + curr.percentage, 0);
   let cumulativePercent = 0;
 
@@ -19,11 +18,11 @@ export const CompositionChart: React.FC<CompositionChartProps> = ({ data }) => {
   };
 
   const colors = [
-    '#882333', // Wine-800
-    '#c3354b', // Wine-600
-    '#e58796', // Wine-400
-    '#f6d5da', // Wine-200
-    '#d6d3d1', // Stone-300
+    '#882333',
+    '#c3354b',
+    '#e58796',
+    '#f6d5da',
+    '#d6d3d1',
   ];
 
   const slices = data.map((slice, index) => {
@@ -31,11 +30,9 @@ export const CompositionChart: React.FC<CompositionChartProps> = ({ data }) => {
     const endPercent = cumulativePercent + (slice.percentage / total);
     cumulativePercent = endPercent;
 
-    // SVG coordinates (start from top -0.25)
     const [startX, startY] = getCoordinatesForPercent(startPercent - 0.25);
     const [endX, endY] = getCoordinatesForPercent(endPercent - 0.25);
 
-    // If the slice is 100%, draw a full circle
     if (slice.percentage >= 100) {
       return {
         path: `M 1 0 A 1 1 0 1 1 -1 0 A 1 1 0 1 1 1 0`,
@@ -48,9 +45,9 @@ export const CompositionChart: React.FC<CompositionChartProps> = ({ data }) => {
     const largeArcFlag = slice.percentage / total > 0.5 ? 1 : 0;
 
     const pathData = [
-      `M ${startX} ${startY}`, // Move
-      `A 1 1 0 ${largeArcFlag} 1 ${endX} ${endY}`, // Arc
-      `L 0 0`, // Line to center
+      `M ${startX} ${startY}`,
+      `A 1 1 0 ${largeArcFlag} 1 ${endX} ${endY}`,
+      `L 0 0`,
     ].join(' ');
 
     return {
@@ -63,7 +60,6 @@ export const CompositionChart: React.FC<CompositionChartProps> = ({ data }) => {
 
   return (
     <div className="flex flex-col sm:flex-row items-center gap-6">
-      {/* Chart */}
       <div className="relative w-32 h-32 shrink-0">
         <svg viewBox="-1 -1 2 2" className="w-full h-full -rotate-90">
            {slices.map((slice, i) => (
@@ -75,7 +71,6 @@ export const CompositionChart: React.FC<CompositionChartProps> = ({ data }) => {
                strokeWidth="0.05"
              />
            ))}
-           {/* Center cutout for Donut */}
            <circle cx="0" cy="0" r="0.6" fill="white" />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -83,7 +78,6 @@ export const CompositionChart: React.FC<CompositionChartProps> = ({ data }) => {
         </div>
       </div>
 
-      {/* Legend */}
       <div className="flex-1 w-full grid grid-cols-2 sm:grid-cols-1 gap-2">
          {slices.map((slice, i) => (
             <div key={i} className="flex items-center gap-2">
