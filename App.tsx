@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Header } from './components/Header';
 import { ScanButton } from './components/ScanButton';
@@ -156,6 +155,20 @@ const App: React.FC = () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleBackToSearch = () => {
+    setAnalysis({ status: 'idle' });
+    setSearchQuery('');
+    setImagePreview(null);
+    setActiveTab('recent');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleViewCellar = () => {
+    setAnalysis({ status: 'idle' });
+    setActiveTab('cellar');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="min-h-screen pb-safe-area bg-wine-50 font-sans selection:bg-wine-200 flex flex-col">
       <Header />
@@ -231,10 +244,18 @@ const App: React.FC = () => {
 
         {analysis.status === 'success' && analysis.data && (
           <div className="animate-slide-up">
-            <button onClick={() => { setAnalysis({ status: 'idle' }); setSearchQuery(''); setImagePreview(null); setActiveTab('recent'); }} className="mx-6 mb-2 text-[10px] font-extrabold text-stone-900 uppercase tracking-widest hover:text-wine-600 flex items-center gap-1.5 transition-colors">
+            <button onClick={handleBackToSearch} className="mx-6 mb-2 text-[10px] font-extrabold text-stone-900 uppercase tracking-widest hover:text-wine-600 flex items-center gap-1.5 transition-colors">
               <ArrowRight className="w-3 h-3 rotate-180" /> Back to Search
             </button>
-            <WineDisplay data={analysis.data} imagePreview={imagePreview} onUpdateWine={handleWineUpdate} onAddToCellar={handleAddToCellar} onToast={addToast} />
+            <WineDisplay 
+                data={analysis.data} 
+                imagePreview={imagePreview} 
+                onUpdateWine={handleWineUpdate} 
+                onAddToCellar={handleAddToCellar} 
+                onToast={addToast} 
+                onBackToSearch={handleBackToSearch}
+                onViewCellar={handleViewCellar}
+            />
           </div>
         )}
       </main>
