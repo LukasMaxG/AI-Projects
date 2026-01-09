@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
+
+import React, { useMemo, useState } from 'react';
 import { CellarItem, WineData } from '../types';
-import { Package, DollarSign, Calendar, Minus, Plus, Trash2, PieChart, Map, Award } from 'lucide-react';
+import { Package, DollarSign, Calendar, Minus, Plus, Trash2, PieChart, Map, Award, Wine } from 'lucide-react';
 
 interface CellarDashboardProps {
   items: CellarItem[];
@@ -17,6 +18,28 @@ const estimatePrice = (priceStr: string): number => {
     return (min + max) / 2;
   }
   return Number(clean) || 0;
+};
+
+const WineInventoryThumbnail = ({ wine }: { wine: WineData }) => {
+  const [error, setError] = useState(false);
+  const src = wine.localImage || wine.onlineImage;
+
+  if (!src || error) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-wine-50/50">
+        <Wine className="w-8 h-8 text-wine-200" strokeWidth={1.5} />
+      </div>
+    );
+  }
+
+  return (
+    <img 
+      src={src} 
+      className="w-full h-full object-cover rounded-xl" 
+      alt={wine.name} 
+      onError={() => setError(true)} 
+    />
+  );
 };
 
 export const CellarDashboard: React.FC<CellarDashboardProps> = ({ items, onUpdateQuantity, onRemoveItem, onViewWine }) => {
@@ -137,7 +160,7 @@ export const CellarDashboard: React.FC<CellarDashboardProps> = ({ items, onUpdat
               <div key={item.id} className="bg-white p-5 rounded-[2rem] border border-stone-100 shadow-xl shadow-wine-950/5 flex flex-col gap-4 animate-fade-in">
                 <div className="flex gap-4 cursor-pointer" onClick={() => onViewWine(item.wine)}>
                   <div className="w-20 h-24 bg-stone-50 rounded-2xl overflow-hidden shrink-0 border border-stone-100 shadow-inner p-1">
-                    <img src={item.wine.onlineImage || 'https://images.unsplash.com/photo-1559563362-c667ba5f5480?auto=format&fit=crop&q=80&w=200'} className="w-full h-full object-cover rounded-xl" alt="" />
+                    <WineInventoryThumbnail wine={item.wine} />
                   </div>
                   <div className="flex-1 min-w-0">
                      <h4 className="font-sans font-bold text-wine-950 text-lg leading-tight line-clamp-2">{item.wine.name}</h4>

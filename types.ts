@@ -90,6 +90,7 @@ export interface WineData {
   websiteUrl?: string; // New: Official Website
   onlineImage?: string; // New: AI found image URL (Primary)
   imageCandidates?: string[]; // New: List of candidate URLs to try if primary fails
+  localImage?: string; // New: Persisted user-captured photo
   awards: string[];
   funFacts: string[]; 
   bestVintages?: LegendaryVintage[] | string[]; // New: List of best years (Rich object or legacy string)

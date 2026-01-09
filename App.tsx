@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Header } from './components/Header';
 import { ScanButton } from './components/ScanButton';
@@ -5,18 +6,20 @@ import { WineDisplay } from './components/WineDisplay';
 import { CellarDashboard } from './components/CellarDashboard';
 import { analyzeWineLabel, searchWineByName } from './services/geminiService';
 import { AnalysisState, WineData, CellarItem } from './types';
-import { Loader2, AlertCircle, Search, ArrowRight, Sparkles } from 'lucide-react';
+import { Loader2, AlertCircle, Search, ArrowRight, Sparkles, Wine as WineIcon } from 'lucide-react';
 import { Toast, ToastMessage } from './components/Toast';
 
 const WineBottleIcon = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M9 2h6" /><path d="M12 2v5" /><path d="M8 9h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2Z" /><path d="M8 14h8" opacity="0.3" />
-  </svg>
+  <div className={`flex items-center justify-center bg-wine-50/50 rounded-xl ${className}`}>
+    <WineIcon className="w-1/2 h-1/2 text-wine-200" strokeWidth={1.5} />
+  </div>
 );
 
-const WineListItemThumbnail = ({ src }: { src?: string }) => {
+const WineListItemThumbnail = ({ wine }: { wine: WineData }) => {
   const [error, setError] = useState(false);
-  if (!src || error) return <WineBottleIcon className="w-5 h-5 text-wine-300" />;
+  const src = wine.localImage || wine.onlineImage;
+  
+  if (!src || error) return <WineBottleIcon className="w-12 h-12" />;
   return <img src={src} alt="" className="w-full h-full object-cover" onError={() => setError(true)} />;
 };
 
@@ -110,20 +113,24 @@ const App: React.FC = () => {
   };
 
   const handleImageSelect = async (file: File) => {
-    const reader = new FileReader();
-    reader.onloadend = () => setImagePreview(reader.result as string);
-    reader.readAsDataURL(file);
+    const localBase64 = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(file);
+    });
+
+    setImagePreview(localBase64);
     setAnalysis({ status: 'analyzing' });
+    
     try {
-      const base64Data = await new Promise<string>((resolve, reject) => {
-        const r = new FileReader();
-        r.readAsDataURL(file);
-        r.onload = () => resolve((r.result as string).split(',')[1]);
-        r.onerror = e => reject(e);
-      });
-      const data = await analyzeWineLabel(base64Data, file.type);
-      setAnalysis({ status: 'success', data });
-      saveToHistory(data);
+      const base64Only = localBase64.split(',')[1];
+      const data = await analyzeWineLabel(base64Only, file.type);
+      
+      // PERSIST THE USER'S PHOTO
+      const dataWithPhoto: WineData = { ...data, localImage: localBase64 };
+      
+      setAnalysis({ status: 'success', data: dataWithPhoto });
+      saveToHistory(dataWithPhoto);
     } catch (error) {
       setAnalysis({ status: 'error', error: error instanceof Error ? error.message : "Failed to analyze image" });
     }
@@ -145,7 +152,7 @@ const App: React.FC = () => {
 
   const loadFromHistory = (item: WineData) => {
       setAnalysis({ status: 'success', data: item });
-      setImagePreview(item.onlineImage || null);
+      setImagePreview(item.localImage || item.onlineImage || null);
       window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -155,7 +162,7 @@ const App: React.FC = () => {
       <Toast messages={toasts} onRemove={removeToast} />
 
       <main className="max-w-md mx-auto relative z-10 w-full flex-grow">
-        <div className="px-6 mb-6 flex gap-4 justify-center">
+        <div className="px-6 mb-3 flex gap-4 justify-center">
             {analysis.status === 'idle' && (
                 <>
                    <button onClick={() => setActiveTab('recent')} className={`px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'recent' ? 'bg-wine-900 text-white shadow-lg' : 'bg-white text-stone-400 border border-stone-200'}`}>Search</button>
@@ -171,7 +178,7 @@ const App: React.FC = () => {
         )}
         
         {analysis.status === 'idle' && activeTab === 'recent' && (
-          <div className="px-6 py-2 animate-fade-in space-y-8">
+          <div className="px-6 py-2 animate-fade-in space-y-6">
             <div className="bg-white p-6 rounded-[2rem] shadow-xl shadow-wine-900/5 border border-wine-100">
               <h2 className="text-2xl font-serif font-bold text-wine-900 mb-4 tracking-tight">Find a wine</h2>
               <form onSubmit={handleTextSearch} className="relative group z-10">
@@ -189,7 +196,9 @@ const App: React.FC = () => {
                 <div className="divide-y divide-wine-50 max-h-72 overflow-y-auto">
                     {history.length > 0 ? history.map((item, idx) => (
                         <div key={idx} onClick={() => loadFromHistory(item)} className="p-4 flex items-center gap-4 hover:bg-wine-50 cursor-pointer transition-colors">
-                            <div className="w-12 h-12 bg-wine-50 rounded-xl overflow-hidden shrink-0 border border-wine-100 flex items-center justify-center"><WineListItemThumbnail src={item.onlineImage} /></div>
+                            <div className="w-12 h-12 bg-wine-50 rounded-xl overflow-hidden shrink-0 border border-wine-100 flex items-center justify-center">
+                              <WineListItemThumbnail wine={item} />
+                            </div>
                             <div className="flex-1 min-w-0"><p className="font-semibold text-wine-900 text-base truncate tracking-tight">{item.name}</p><p className="text-xs text-stone-500 font-medium truncate uppercase tracking-wide mt-0.5">{item.region} • {item.vintage}</p></div>
                             <div className="bg-wine-50 px-2.5 py-1 rounded-md text-xs font-bold text-wine-800 tabular-nums">{item.criticScores?.[0]?.score || '-'}</div>
                         </div>
@@ -203,7 +212,7 @@ const App: React.FC = () => {
         )}
 
         {analysis.status === 'analyzing' && (
-          <div className="flex flex-col items-center justify-center py-24 px-6 text-center animate-fade-in">
+          <div className="flex flex-col items-center justify-center py-20 px-6 text-center animate-fade-in">
             <div className="relative mb-8"><div className="absolute inset-0 bg-wine-200 rounded-full animate-ping opacity-75"></div><div className="relative bg-white p-5 rounded-full shadow-xl"><Loader2 className="w-12 h-12 text-wine-600 animate-spin" /></div></div>
             <h3 className="text-2xl font-serif font-bold text-wine-900 tracking-tight">Consulting the Sommelier...</h3>
             <p className="text-stone-500 mt-3 font-medium">Researching vintage, price, and tasting notes.</p>
@@ -222,7 +231,7 @@ const App: React.FC = () => {
 
         {analysis.status === 'success' && analysis.data && (
           <div className="animate-slide-up">
-            <button onClick={() => { setAnalysis({ status: 'idle' }); setSearchQuery(''); setImagePreview(null); setActiveTab('recent'); }} className="mx-6 mb-4 text-[10px] font-extrabold text-stone-900 uppercase tracking-widest hover:text-wine-600 flex items-center gap-1.5 transition-colors">
+            <button onClick={() => { setAnalysis({ status: 'idle' }); setSearchQuery(''); setImagePreview(null); setActiveTab('recent'); }} className="mx-6 mb-2 text-[10px] font-extrabold text-stone-900 uppercase tracking-widest hover:text-wine-600 flex items-center gap-1.5 transition-colors">
               <ArrowRight className="w-3 h-3 rotate-180" /> Back to Search
             </button>
             <WineDisplay data={analysis.data} imagePreview={imagePreview} onUpdateWine={handleWineUpdate} onAddToCellar={handleAddToCellar} onToast={addToast} />
@@ -232,7 +241,7 @@ const App: React.FC = () => {
 
       <ScanButton onImageSelect={handleImageSelect} disabled={analysis.status === 'analyzing'} />
 
-      <footer className="w-full pt-8 pb-32 mt-8 text-center bg-wine-50 border-t border-wine-100/50">
+      <footer className="w-full pt-4 pb-32 mt-4 text-center bg-wine-50 border-t border-wine-100/50">
         <p className="text-[10px] uppercase tracking-widest text-stone-400 font-bold mb-1">Created By Manny Gutierrez</p>
         <p className="text-[10px] text-stone-400/80">copyright www.MagmaTek.com</p>
       </footer>
