@@ -1,7 +1,11 @@
 import React from 'react';
-import { Wine, Sparkles } from 'lucide-react';
+import { Wine, Sparkles, WifiOff } from 'lucide-react';
 
-export const Header: React.FC = () => {
+interface HeaderProps {
+  isOnline?: boolean;
+}
+
+export const Header: React.FC<HeaderProps> = ({ isOnline = true }) => {
   return (
     <header className="bg-gradient-to-br from-wine-950 to-wine-900 text-wine-50 py-2.5 px-6 rounded-b-3xl shadow-xl mb-3 relative overflow-hidden">
       {/* Decorative background element - subtle */}
@@ -9,9 +13,16 @@ export const Header: React.FC = () => {
 
       <div className="relative flex items-center justify-between z-10">
         <div className="flex flex-col justify-center">
-          <h1 className="text-2xl font-serif font-bold italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-wine-50 to-wine-200 drop-shadow-sm leading-tight">
-            Sommelier AI
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-serif font-bold italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-wine-50 to-wine-200 drop-shadow-sm leading-tight">
+              Sommelier AI
+            </h1>
+            {!isOnline && (
+              <span className="bg-stone-500/40 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest flex items-center gap-1 border border-white/10">
+                <WifiOff className="w-2.5 h-2.5" /> Offline
+              </span>
+            )}
+          </div>
           <p className="text-wine-200/80 text-[10px] font-bold tracking-[0.2em] uppercase leading-none mt-0.5">
             Intelligent Wine Analysis
           </p>

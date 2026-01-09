@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Camera, Upload } from 'lucide-react';
+import { Camera, WifiOff } from 'lucide-react';
 
 interface ScanButtonProps {
   onImageSelect: (file: File) => void;
@@ -16,6 +16,7 @@ export const ScanButton: React.FC<ScanButtonProps> = ({ onImageSelect, disabled 
   };
 
   const triggerSelect = () => {
+    if (disabled) return;
     fileInputRef.current?.click();
   };
 
@@ -31,10 +32,12 @@ export const ScanButton: React.FC<ScanButtonProps> = ({ onImageSelect, disabled 
       <button
         onClick={triggerSelect}
         disabled={disabled}
-        className="bg-wine-900 text-white rounded-full px-8 py-4 shadow-xl flex items-center space-x-3 hover:bg-wine-800 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+        className={`rounded-full px-8 py-4 shadow-xl flex items-center space-x-3 transition-all active:scale-95 disabled:opacity-80 disabled:cursor-not-allowed ${disabled ? 'bg-stone-500 text-stone-200 grayscale' : 'bg-wine-900 text-white hover:bg-wine-800'}`}
       >
-        <Camera className="w-6 h-6" />
-        <span className="font-semibold text-lg">Scan Wine Label</span>
+        {disabled && !navigator.onLine ? <WifiOff className="w-6 h-6" /> : <Camera className="w-6 h-6" />}
+        <span className="font-semibold text-lg">
+          {disabled && !navigator.onLine ? "Offline - Search History Only" : "Scan Wine Label"}
+        </span>
       </button>
     </div>
   );

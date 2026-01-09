@@ -5,7 +5,7 @@ import { WineDisplay } from './components/WineDisplay';
 import { CellarDashboard } from './components/CellarDashboard';
 import { analyzeWineLabel, searchWineByName } from './services/geminiService';
 import { AnalysisState, WineData, CellarItem } from './types';
-import { Loader2, AlertCircle, Search, ArrowRight, Sparkles, Wine as WineIcon } from 'lucide-react';
+import { Loader2, AlertCircle, Search, ArrowRight, Sparkles, Wine as WineIcon, WifiOff } from 'lucide-react';
 import { Toast, ToastMessage } from './components/Toast';
 
 const WineBottleIcon = ({ className }: { className?: string }) => (
@@ -30,6 +30,7 @@ const App: React.FC = () => {
   const [cellar, setCellar] = useState<CellarItem[]>([]);
   const [activeTab, setActiveTab] = useState<'recent' | 'cellar'>('recent');
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   const addToast = useCallback((text: string, type: 'success' | 'info' = 'success') => {
     const id = Math.random().toString(36).substr(2, 9);
@@ -41,13 +42,30 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      addToast("Connection restored", "success");
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      addToast("You are offline. AI analysis is unavailable.", "info");
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
     try {
       const savedHistory = localStorage.getItem('wineHistory');
       if (savedHistory) setHistory(JSON.parse(savedHistory));
       const savedCellar = localStorage.getItem('wineCellar');
       if (savedCellar) setCellar(JSON.parse(savedCellar));
     } catch (e) { console.error(e); }
-  }, []);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [addToast]);
 
   const saveToHistory = (data: WineData) => {
     setHistory(prev => {
@@ -112,6 +130,11 @@ const App: React.FC = () => {
   };
 
   const handleImageSelect = async (file: File) => {
+    if (!isOnline) {
+      addToast("Network required for label analysis", "info");
+      return;
+    }
+
     const localBase64 = await new Promise<string>((resolve) => {
       const reader = new FileReader();
       reader.onloadend = () => resolve(reader.result as string);
@@ -125,7 +148,6 @@ const App: React.FC = () => {
       const base64Only = localBase64.split(',')[1];
       const data = await analyzeWineLabel(base64Only, file.type);
       
-      // PERSIST THE USER'S PHOTO
       const dataWithPhoto: WineData = { ...data, localImage: localBase64 };
       
       setAnalysis({ status: 'success', data: dataWithPhoto });
@@ -137,6 +159,10 @@ const App: React.FC = () => {
 
   const handleTextSearch = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isOnline) {
+      addToast("Network required for AI search", "info");
+      return;
+    }
     if (!searchQuery.trim()) return;
     setImagePreview(null);
     setAnalysis({ status: 'analyzing' });
@@ -171,7 +197,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen pb-safe-area bg-wine-50 font-sans selection:bg-wine-200 flex flex-col">
-      <Header />
+      <Header isOnline={isOnline} />
       <Toast messages={toasts} onRemove={removeToast} />
 
       <main className="max-w-md mx-auto relative z-10 w-full flex-grow">
@@ -195,10 +221,28 @@ const App: React.FC = () => {
             <div className="bg-white p-6 rounded-[2rem] shadow-xl shadow-wine-900/5 border border-wine-100">
               <h2 className="text-2xl font-serif font-bold text-wine-900 mb-4 tracking-tight">Find a wine</h2>
               <form onSubmit={handleTextSearch} className="relative group z-10">
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-wine-300 w-6 h-6 group-focus-within:text-wine-500 transition-colors" />
-                <input type="text" placeholder="Type a wine name..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-wine-50/50 border border-wine-100 rounded-full py-4 pl-14 pr-16 text-lg text-wine-900 placeholder:text-wine-300/80 focus:outline-none focus:ring-2 focus:ring-wine-200 focus:bg-white transition-all shadow-inner" />
-                <button type="submit" disabled={!searchQuery.trim()} className="absolute right-2 top-2 bottom-2 bg-wine-900 text-white rounded-full w-11 h-11 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-wine-800 transition-colors shadow-md active:scale-95"><ArrowRight className="w-5 h-5" /></button>
+                <Search className={`absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 transition-colors ${isOnline ? 'text-wine-300 group-focus-within:text-wine-500' : 'text-stone-300'}`} />
+                <input 
+                  type="text" 
+                  placeholder={isOnline ? "Type a wine name..." : "Offline mode..."} 
+                  disabled={!isOnline}
+                  value={searchQuery} 
+                  onChange={(e) => setSearchQuery(e.target.value)} 
+                  className={`w-full border rounded-full py-4 pl-14 pr-16 text-lg transition-all shadow-inner focus:outline-none ${isOnline ? 'bg-wine-50/50 border-wine-100 text-wine-900 placeholder:text-wine-300/80 focus:ring-2 focus:ring-wine-200 focus:bg-white' : 'bg-stone-50 border-stone-100 text-stone-400 cursor-not-allowed'}`} 
+                />
+                <button 
+                  type="submit" 
+                  disabled={!searchQuery.trim() || !isOnline} 
+                  className={`absolute right-2 top-2 bottom-2 rounded-full w-11 h-11 flex items-center justify-center transition-all shadow-md active:scale-95 ${isOnline ? 'bg-wine-900 text-white hover:bg-wine-800' : 'bg-stone-200 text-stone-400 cursor-not-allowed'}`}
+                >
+                  <ArrowRight className="w-5 h-5" />
+                </button>
               </form>
+              {!isOnline && (
+                <div className="mt-4 flex items-center gap-2 text-xs font-bold text-stone-400 justify-center bg-stone-50 py-2 rounded-xl">
+                  <WifiOff className="w-3 h-3" /> Connection required for new AI searches
+                </div>
+              )}
               <div className="mt-4 flex items-start gap-3 text-sm text-wine-800/80 bg-wine-50 p-4 rounded-xl border border-wine-100/60 leading-relaxed">
                 <Sparkles className="w-4 h-4 text-wine-400 shrink-0 mt-0.5 fill-wine-100" /><p><span className="font-bold uppercase text-[10px] tracking-widest text-wine-400 block mb-1">Pro Tip</span>Include the <span className="text-wine-900 font-bold">Vintage Year</span> for the most accurate pricing.</p>
               </div>
@@ -260,7 +304,7 @@ const App: React.FC = () => {
         )}
       </main>
 
-      <ScanButton onImageSelect={handleImageSelect} disabled={analysis.status === 'analyzing'} />
+      <ScanButton onImageSelect={handleImageSelect} disabled={analysis.status === 'analyzing' || !isOnline} />
 
       <footer className="w-full pt-4 pb-32 mt-4 text-center bg-wine-50 border-t border-wine-100/50">
         <p className="text-[10px] uppercase tracking-widest text-stone-400 font-bold mb-1">Created By Manny Gutierrez</p>
