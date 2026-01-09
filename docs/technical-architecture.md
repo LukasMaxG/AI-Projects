@@ -2,93 +2,49 @@
 
 ## Tech Stack
 
-*   **Framework**: React 19 (via `create-react-app` style entry)
+*   **Framework**: React 19
 *   **Language**: TypeScript
-*   **Styling**: Tailwind CSS (CDN-based for simplicity)
-*   **Typography**: 
-    *   Serif: *Playfair Display* (Headings)
-    *   Sans: *Inter* (Body/UI - Replaces Plus Jakarta Sans for improved readability)
+*   **Styling**: Tailwind CSS
 *   **AI Provider**: Google Gemini API (`@google/genai` SDK)
 *   **Icons**: Lucide React
 
 ## Architectural Decisions
 
 ### 1. Client-Side AI Orchestration
-**Decision**: We call the Gemini API directly from the frontend client.
-**Reasoning**:
-*   Reduces latency by removing a middle-layer server.
-*   Simplifies the MVP infrastructure (no backend required).
-*   **Security Note**: In a production environment, this would be moved to a serverless function to protect the API Key.
+**Decision**: Direct Gemini API calls from the client for minimal latency.
+**Model**: `gemini-3-flash-preview` chosen for the optimal balance of speed (under 15s) and grounding accuracy.
 
-### 2. Model Selection: `gemini-2.5-flash`
-**Decision**: We utilize **Gemini 2.5 Flash** for both Text and Image tasks.
+### 2. Decoupled UI Feedback (Toast System)
+**Decision**: A standalone `Toast.tsx` component managed by a centralized hook-like pattern in `App.tsx`.
 **Reasoning**:
-*   **Performance**: Flash provides significantly lower latency (5-15s) compared to Pro models (30-60s), which is critical for a consumer-facing "instant scan" app.
-*   **Efficiency**: Capable of handling the Google Search tool and complex JSON formatting without the computational overhead of the larger model.
-*   **Multimodality**: Native support for image understanding allows for seamless label scanning.
+*   **User Flow**: Standard browser `alerts` break the "luxury" immersion. Toasts allow users to continue interacting while receiving feedback.
+*   **Consistency**: Centralized state ensures multiple notifications queue correctly without overlapping.
 
-### 3. Structured Output Strategy (JSON)
-**Decision**: We instruct the model via `systemInstruction` to output raw JSON, and we perform a "soft cleaning" of the response string before parsing.
+### 3. High-Fidelity Social Assets (Tasting Cards)
+**Decision**: Implementing a dedicated "Digital Tasting Card" as a modal component.
 **Reasoning**:
-*   Ensures the UI renders consistently.
-*   We rely on prompt engineering ("strict JSON") and a `try-catch` block in `geminiService.ts` rather than strict schema validation, as schema validation can sometimes conflict with Search Tool outputs in the current API version.
+*   **Social Proof**: Encourages app virality by providing users with a beautiful asset they *want* to share.
+*   **Web Share API**: Uses native OS sharing features where available, falling back to clipboard copy for broad compatibility.
 
-### 4. Zero-Backend Data Export
-**Decision**: The "Export to Docs" feature generates a Blob URL (HTML/Text) entirely in the browser.
+### 4. Advanced Analytics Memoization
+**Decision**: Use React `useMemo` for all cellar statistics (valuation, readiness, diversity).
 **Reasoning**:
-*   Keeps the app offline-capable for this specific feature.
-*   No server storage costs for generated reports.
+*   **Performance**: Prevents expensive calculation loops on every render, especially as user cellars grow to 100+ items.
+*   **Data Integrity**: Statistics stay perfectly in sync with the `localStorage` state.
 
-### 5. Mobile-First UI
-**Decision**: The layout uses safe-area padding, large touch targets (Floating Action Button), and mobile-optimized fonts.
-**Reasoning**:
-*   The primary use case is scanning a bottle while standing in a store or at a dinner table.
+### 5. Structured Output Strategy (JSON)
+**Decision**: Instruction-driven JSON output with heuristic cleaning.
+**Model Config**: `responseMimeType: "application/json"` with `googleSearch` tools enabled.
 
-### 6. Unified Data Pipeline
-**Decision**: Both `analyzeWineLabel` (Image) and `searchWineByName` (Text) map to the exact same `WineData` interface and use the same `parseResponse` utility.
-**Reasoning**:
-*   Reduces code duplication.
-*   Ensures the UI component (`WineDisplay`) works identically regardless of how the user initiated the search.
+### 6. Domain-Specific Visualization (SVG)
+**Decision**: Custom SVG charts for "Vintage Comparison" (Line) and "Grape Blend" (Donut).
+**Reasoning**: 
+*   Matches the premium "editorial" brand without the weight of 3rd-party charting libraries.
 
-### 7. Zero-Dependency Visualization (SVG)
-**Decision**: We implemented charts (Vintage Chart, Composition Donut) using raw **SVG** and React state.
-**Reasoning**:
-*   **Performance**: Keeps the bundle size extremely small (saving ~30-100kb) compared to libraries like Recharts.
-*   **Control**: Allows for pixel-perfect custom styling (gradients, glowing lines) that matches the app's premium aesthetic exactly.
+### 7. Hybrid Persistence Model
+**Decision**: `WineData` acts as a unified container for AI-fetched facts and User-mutated data (`userRating`, `userNotes`).
+**Benefit**: Personal data travels with the wine record during exports and shared tasting cards.
 
-### 8. Deep-Dive Data Modeling
-**Decision**: The `WineData` type uses nested objects (e.g., `TerroirData`, `CriticScore[]`, `LegendaryVintage[]`) rather than long text description strings.
-**Reasoning**:
-*   **UI Flexibility**: Allows us to render specific data points as "badges" (e.g., "Organic" tag), icons (Soil types), or Cards (Vintage Awards) rather than just dumping a paragraph of text.
-*   **AI Instruction**: Forcing the AI to fill these specific buckets ensures it actually performs the research for each specific aspect (Soil, Oak, Critics).
-
-### 9. Multi-Source Heuristic Image Search
-**Decision**: We instruct the AI to generate a list of 4-6 "Candidate URLs" from specific high-probability sources, prioritizing "Winery Estate" shots.
-**Reasoning**:
-*   **Reliability**: Hotlinking protection and 404s are common with web images. A single source has a high failure rate.
-*   **Speed vs Coverage**: We optimized this down from 10 to ~5 candidates. This provides enough redundancy for the retry logic without causing the AI to timeout while searching for too many images.
-
-### 10. Client-Side Persistence (Favorites & History)
-**Decision**: We utilize browser `localStorage` to manage the "Favorites" and "Recent History" collections.
-**Reasoning**:
-*   **Immediate Availability**: Data is available instantly on app load without network requests.
-*   **Privacy**: User data remains entirely on their device.
-*   **Simplicity**: Avoids the complexity of user authentication and database schemas for the MVP phase.
-
-### 11. Hybrid Data Model (AI + User)
-**Decision**: The `WineData` object serves as a hybrid container, storing both the immutable AI-retrieved facts (e.g. Vintage, Grapes) and the mutable user inputs (e.g. `userRating`, `userNotes`).
-**Reasoning**:
-*   **Simplicity**: Keeps the architecture flat and avoids needing a separate "User Meta" database table or object.
-*   **Portability**: When a user exports/saves a wine, their personal notes travel with the object automatically.
-
-### 12. Domain-Specific Visualization Strategy
-**Decision**: We choose specific chart types for semantic correctness rather than visual uniformity.
-**Reasoning**:
-*   **Donut Chart (Composition)**: Used for the Grape Blend to visualize "Parts to Whole".
-*   **Line/Area Graph (Vintage Analysis)**: Replaced the initial Bar Chart to better visualize "Trends over Time" and quality trajectories.
-
-### 13. Contextual Education Layer
-**Decision**: We use the LLM to synthesize educational content (Climate, Pronunciation, Jargon Definitions) on the fly based on the specific wine context.
-**Reasoning**:
-*   **Scalability**: Avoids maintaining a massive static database of every wine region and technical term.
-*   **Relevance**: The "Vibe" and "Definitions" are tailored specifically to the bottle scanned (e.g., explaining "Riserva" only if the bottle *is* a Riserva).
+### 8. Mobile-First Luxury UI
+**Decision**: Usage of champagne/wine color palettes, Playfair Display serif typography, and tactile feedback (scale-95 active states).
+**Reasoning**: Simulates the feeling of a premium physical cellar book or high-end lifestyle magazine.

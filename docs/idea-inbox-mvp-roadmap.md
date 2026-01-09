@@ -3,53 +3,43 @@
 ## Project Vision
 **Sommelier AI** is a Progressive Web App (PWA) designed to be a "pocket wine expert." It empowers users to scan any wine bottle label and instantly receive a comprehensive report containing vintage details, tasting notes, market pricing, and winery history.
 
-## Current Status: MVP (Phase 2.7) - ✅ Education & Context
-The application has evolved into a "Wine Educator," moving beyond raw data to provide cultural context, pronunciation guides, and label decoding.
+## Current Status: Refinement & Analytics (Phase 3.0) - ✅ COMPLETED
+The application has moved beyond a simple data tool into a polished lifestyle companion with social features and deep cellar insights.
 
 ### Key Features Implemented
 
-#### 1. Education & Context (Phase 2.7 New)
-*   **Winography-Style Primer**: A dedicated "Education" section inspired by modern wine learning platforms.
-*   **The "Vibe" Analogy**: AI generates a relatable 1-sentence analogy (e.g., "Think of this region like the 'Texas of Italy'").
-*   **Label Decoder**: Automatically identifies and defines technical jargon on the label (e.g., *Riserva*, *Sur Lie*) in plain English.
-*   **Pronunciation Guide**: Displays the native spelling alongside a phonetic breakdown (e.g., *Chianti -> Key-AHN-tee*).
-*   **Terroir Snapshot**: Visualizes climate and geography using icons (Sun/Mountain) to explain *why* the wine tastes that way.
+#### 1. Social Sharing: Digital Tasting Cards (Phase 3.0 New)
+*   **Shareable Aesthetics**: A high-fidelity "Digital Tasting Card" that summarizes the wine's essence in a beautiful, screenshot-ready format.
+*   **Native Sharing**: Integration with the Web Share API for instant delivery to Instagram, WhatsApp, or iMessage.
+*   **Visual Snapshot**: Combines the winery image with key stats (Rating, Body, ABV) and aromatic notes in a branded overlay.
 
-#### 2. Performance & Latency
-*   **Gemini 2.5 Flash Migration**: Switched from Pro to Flash model, reducing analysis time from ~60s to **under 15s**.
-*   **Token Optimization**: Streamlined system instructions and reduced candidate generation counts to minimize processing overhead.
+#### 2. Luxury UX & Feedback (Phase 3.0 New)
+*   **Luxury Toast System**: Replaced intrusive browser alerts with custom-designed, non-blocking "Toasts" that match the velvet/champagne aesthetic.
+*   **Animated Transitions**: Smooth slide-down and fade effects for all UI feedback loops.
 
-#### 3. Premium User Experience
-*   **4-Zone Layout**: Structured content into "Snapshot", "Sensory", "Analysis", and "Explorer" zones.
-*   **Visual Analysis**: Progress bars for wine style (Body/Tannin/Acidity) and color-coded flavor tags.
-*   **Smart Blend Visualization**: Dynamic SVG Donut Chart showing grape varietal composition percentages.
-*   **Vivino-Style Ratings**: Converts 100-point critic scores into a relatable **5-Star Value Scale**.
+#### 3. Advanced Cellar Analytics (Phase 3.0 New)
+*   **Portfolio Valuation**: Real-time estimation of total cellar value based on acquisition prices and market data.
+*   **Readiness Tracker**: Automatically identifies bottles currently in their "Peak Maturity" window.
+*   **Diversity Metrics**: Analyzes cellar composition to show region dominance and style diversity (e.g., "7 Styles Across 3 Regions").
 
-#### 4. Personalization
-*   **My Palate**: Users can rate wines (1-5 stars) and add personal tasting notes.
-*   **Data Persistence**: Ratings and notes are saved locally to the device, updating the History and Favorites lists in real-time.
+#### 4. Education & Context (Phase 2.7)
+*   **Winography-Style Primer**: Dedicated sections for climate, geography, and native pronunciations.
+*   **Label Decoder**: Definitions for technical jargon (e.g., *Riserva*, *Sur Lie*).
 
-#### 5. Advanced Intelligence
-*   **The Sommelier's Pivot**: AI-powered recommendations suggesting 2 similar wines (Similar Style & Hidden Gem).
-*   **Legendary Vintages**: Rich cards displaying specific years, tasting context, and award badges.
-*   **Vintage Chart**: Custom SVG Line Graph with trend lines and average benchmarks for quality analysis.
-*   **Detailed Value Projection**: AI-generated investment analysis based on market trends with specific "Investment Grade" assessment.
-
-#### 6. Robust Connectivity
-*   **Targeted Image Search**: Optimized heuristic searches 4-6 specific high-probability databases (WineLibrary, etc.).
-*   **Direct Access**: Deep links to official winery websites and Google Maps.
-*   **Smart Fallback**: Auto-cycles through image candidates before showing a placeholder.
+#### 5. High-Performance Analysis
+*   **Gemini 3 Integration**: Analysis times under 15s using the latest Flash models.
+*   **Google Search Grounding**: Live data verification for market prices and winery history.
 
 ## Roadmap
 
-### Phase 3: Audio & Interaction (Refinement)
-*   [ ] **Audio TTS**: Add a "Play" button to the Pronunciation section to hear the name spoken (using SpeechSynthesis API).
-*   [ ] **Voice Input**: Allow users to dictate their "Tasting Notes" instead of typing.
+### Phase 4: Audio & Interaction (Refinement)
+*   [ ] **Audio TTS**: Implement "Listen" feature to hear native pronunciations of complex wine names.
+*   [ ] **Voice-to-Note**: Allow dictation for the "Personal Notes" section.
 
-### Phase 4: Offline & Performance
-*   [ ] **Service Workers**: Cache the app shell for instant loading.
-*   [ ] **Offline Database**: Upgrade from `localStorage` to `IndexedDB` for larger image caching.
+### Phase 5: Offline & Performance
+*   [ ] **Service Workers**: Implement full offline shell caching for store use-cases.
+*   [ ] **IndexedDB**: Transition from `localStorage` to a more robust local database for high-volume cellars.
 
-### Phase 5: Social & Commercial
-*   [ ] **Social Sharing**: Generate a shareable image card of the wine profile for Instagram/WhatsApp.
-*   [ ] **Buy Now Links**: Integrate with wine merchants to provide direct purchase links based on the identified bottle.
+### Phase 6: Commercial Integration
+*   [ ] **Buy Now Links**: Connect identified bottles to nearby merchants or online retailers.
+*   [ ] **Inventory Alerts**: Notify users when a bottle in their cellar enters its peak drinking window.
