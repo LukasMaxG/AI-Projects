@@ -8,9 +8,26 @@ import { AnalysisState, WineData, CellarItem } from './types';
 import { Loader2, AlertCircle, Search, ArrowRight, Sparkles, Wine as WineIcon, WifiOff } from 'lucide-react';
 import { Toast, ToastMessage } from './components/Toast';
 
+const AppIllustration = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 400 600" className={className} xmlns="http://www.w3.org/2000/svg">
+    <path d="M117 18.5h48v31.7h-48z" fill="#fff" stroke="#000" strokeWidth="6" />
+    <path d="M117 28h48v61.7h-48z" fill="#d12323" stroke="#000" strokeWidth="6" />
+    <path d="M141 113.8c-42.5 0-71 42.6-71 85.1v255.4h142.1V198.9c0-42.5-28.5-85.1-71.1-85.1z" fill="#4a4a4a" stroke="#000" strokeWidth="8" />
+    <path d="M70 227.3h142.1v142.1H70z" fill="#fff" stroke="#000" strokeWidth="8" />
+    <path d="M70 412.5h142.1v21.3H70z" fill="#4a4a4a" stroke="#000" strokeWidth="8" />
+    <path d="M70 448h142.1v21.3H70z" fill="#882333" stroke="#000" strokeWidth="8" />
+    <path d="M70 483.5h142.1v28.4H70z" fill="#4a4a4a" stroke="#000" strokeWidth="8" />
+    <path d="M78.6 198.9c0-28.4 19-56.8 47.4-56.8" fill="none" stroke="#fff" strokeWidth="4" strokeLinecap="round" />
+    <path d="M106.9 255.7h71M163.7 284.1h35.5M149.5 312.5h49.7M149.5 340.9h28.4" fill="none" stroke="#000" strokeWidth="6" strokeLinecap="round" />
+    <path d="M247.4 269.9h127.8c0 0 0 106.5-63.9 106.5s-63.9-106.5-63.9-106.5z" fill="#fff" stroke="#000" strokeWidth="8" />
+    <path d="M254.5 319.6h113.6c0 0 0 78.1-56.8 78.1s-56.8-78.1-56.8-78.1z" fill="#d12323" stroke="#000" strokeWidth="4" />
+    <path d="M311.3 376.4v71M254.5 447.4h113.6" fill="none" stroke="#000" strokeWidth="8" strokeLinecap="round" />
+  </svg>
+);
+
 const WineBottleIcon = ({ className }: { className?: string }) => (
-  <div className={`flex items-center justify-center bg-wine-50/50 rounded-xl ${className}`}>
-    <WineIcon className="w-1/2 h-1/2 text-wine-200" strokeWidth={1.5} />
+  <div className={`flex items-center justify-center bg-wine-50/50 rounded-xl p-2 ${className}`}>
+    <AppIllustration className="w-full h-full drop-shadow-sm" />
   </div>
 );
 
@@ -288,9 +305,6 @@ const App: React.FC = () => {
 
         {analysis.status === 'success' && analysis.data && (
           <div className="animate-slide-up">
-            <button onClick={handleBackToSearch} className="mx-6 mb-2 text-[10px] font-extrabold text-stone-900 uppercase tracking-widest hover:text-wine-600 flex items-center gap-1.5 transition-colors">
-              <ArrowRight className="w-3 h-3 rotate-180" /> Back to Search
-            </button>
             <WineDisplay 
                 data={analysis.data} 
                 imagePreview={imagePreview} 
@@ -307,8 +321,8 @@ const App: React.FC = () => {
       <ScanButton onImageSelect={handleImageSelect} disabled={analysis.status === 'analyzing' || !isOnline} />
 
       <footer className="w-full pt-4 pb-32 mt-4 text-center bg-wine-50 border-t border-wine-100/50">
-        <p className="text-[10px] uppercase tracking-widest text-stone-400 font-bold mb-1">Created By Manny Gutierrez</p>
-        <p className="text-[10px] text-stone-400/80">copyright www.MagmaTek.com</p>
+        <p className="text-[9px] uppercase tracking-widest text-stone-400 font-bold mb-1">Created By Manny Gutierrez</p>
+        <p className="text-[9px] text-stone-400/80">copyright www.MagmaTek.io/p>
       </footer>
     </div>
   );

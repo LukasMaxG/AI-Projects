@@ -15,13 +15,22 @@ interface WineDisplayProps {
   onViewCellar: () => void;
 }
 
-const countryCodeMap: Record<string, string> = {
-  'italy': 'it', 'france': 'fr', 'spain': 'es', 'united states': 'us', 'usa': 'us',
-  'argentina': 'ar', 'chile': 'cl', 'australia': 'au', 'germany': 'de', 'portugal': 'pt',
-  'south africa': 'za', 'new zealand': 'nz', 'austria': 'at', 'hungary': 'hu', 'greece': 'gr',
-  'china': 'cn', 'japan': 'jp', 'uruguay': 'uy', 'brazil': 'br', 'canada': 'ca', 'switzerland': 'ch',
-  'united kingdom': 'gb', 'england': 'gb'
-};
+const AppIllustration = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 400 600" className={className} xmlns="http://www.w3.org/2000/svg">
+    <path d="M117 18.5h48v31.7h-48z" fill="#fff" stroke="#000" strokeWidth="6" />
+    <path d="M117 28h48v61.7h-48z" fill="#d12323" stroke="#000" strokeWidth="6" />
+    <path d="M141 113.8c-42.5 0-71 42.6-71 85.1v255.4h142.1V198.9c0-42.5-28.5-85.1-71.1-85.1z" fill="#4a4a4a" stroke="#000" strokeWidth="8" />
+    <path d="M70 227.3h142.1v142.1H70z" fill="#fff" stroke="#000" strokeWidth="8" />
+    <path d="M70 412.5h142.1v21.3H70z" fill="#4a4a4a" stroke="#000" strokeWidth="8" />
+    <path d="M70 448h142.1v21.3H70z" fill="#882333" stroke="#000" strokeWidth="8" />
+    <path d="M70 483.5h142.1v28.4H70z" fill="#4a4a4a" stroke="#000" strokeWidth="8" />
+    <path d="M78.6 198.9c0-28.4 19-56.8 47.4-56.8" fill="none" stroke="#fff" strokeWidth="4" strokeLinecap="round" />
+    <path d="M106.9 255.7h71M163.7 284.1h35.5M149.5 312.5h49.7M149.5 340.9h28.4" fill="none" stroke="#000" strokeWidth="6" strokeLinecap="round" />
+    <path d="M247.4 269.9h127.8c0 0 0 106.5-63.9 106.5s-63.9-106.5-63.9-106.5z" fill="#fff" stroke="#000" strokeWidth="8" />
+    <path d="M254.5 319.6h113.6c0 0 0 78.1-56.8 78.1s-56.8-78.1-56.8-78.1z" fill="#d12323" stroke="#000" strokeWidth="4" />
+    <path d="M311.3 376.4v71M254.5 447.4h113.6" fill="none" stroke="#000" strokeWidth="8" strokeLinecap="round" />
+  </svg>
+);
 
 const StyleMeter = ({ label, value }: { label: string; value: string }) => {
   const getPercentage = (val: string) => {
@@ -50,15 +59,8 @@ const StyleMeter = ({ label, value }: { label: string; value: string }) => {
 const WineBottlePlaceholder = () => (
   <div className="w-full h-full flex flex-col items-center justify-center bg-stone-50 relative overflow-hidden">
     <div className="absolute inset-0 bg-gradient-to-b from-stone-50/50 to-white/50"></div>
-    <div className="relative z-10 w-full h-full flex flex-col items-center justify-center p-8">
-      <div className="relative group">
-        <div className="absolute inset-0 bg-wine-200/20 blur-2xl rounded-full scale-150 transition-transform group-hover:scale-[1.7] duration-700"></div>
-        <WineIcon className="w-16 h-16 text-stone-200 relative z-10" strokeWidth={1} />
-      </div>
-      <div className="mt-4 flex flex-col items-center">
-        <span className="text-[8px] font-black uppercase tracking-[0.4em] text-stone-300">Generic Profile</span>
-        <div className="w-8 h-0.5 bg-stone-100 mt-2 rounded-full"></div>
-      </div>
+    <div className="relative z-10 w-full h-full flex flex-col items-center justify-center p-4">
+      <AppIllustration className="w-24 h-24 drop-shadow-md" />
     </div>
   </div>
 );
@@ -167,63 +169,74 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, on
 
       {showTastingCard && <TastingCard wine={data} onClose={() => setShowTastingCard(false)} />}
 
+      <div className="mx-6">
+        <button onClick={onBackToSearch} className="mb-4 text-[10px] font-extrabold text-stone-400 uppercase tracking-widest hover:text-wine-600 flex items-center gap-1.5 transition-colors group">
+          <ChevronDown className="w-4 h-4 rotate-90 group-hover:-translate-x-1 transition-transform" /> BACK TO SEARCH
+        </button>
+      </div>
+
       {/* ZONE 1: SNAPSHOT */}
-      <div className="bg-white rounded-[2.5rem] p-4 shadow-xl border border-wine-100/50 relative overflow-hidden mx-4">
+      <div className="bg-white rounded-[2.5rem] p-5 shadow-xl border border-wine-100/50 relative overflow-hidden mx-4">
         <div className="absolute -top-10 -right-10 w-40 h-40 bg-wine-50 rounded-full blur-3xl"></div>
-        <div className="relative z-10">
-            <div className="flex gap-4 mb-4">
-                <div className="w-28 sm:w-1/3 shrink-0">
-                   <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-stone-100 border border-stone-100 shadow-md relative flex items-center justify-center group">
-                     {displayImage && !usingPlaceholder ? (
-                        <img src={displayImage} onError={handleImageError} className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105`} alt={data.name} />
-                     ) : (
-                        <WineBottlePlaceholder />
-                     )}
-                     {data.vintage && <div className="absolute top-2 left-2 bg-white/90 text-wine-900 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm backdrop-blur-md z-20">{data.vintage}</div>}
-                   </div>
-                </div>
-                <div className="flex-1 flex flex-col min-w-0">
-                    <a href={mapUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-wine-600 hover:text-wine-800 text-[10px] font-bold uppercase tracking-widest mb-1 cursor-pointer transition-colors">
-                        <MapPin className="w-3 h-3" /><span className="line-clamp-1 underline decoration-dotted underline-offset-2">{data.country}</span>
+        <div className="relative z-10 flex gap-5">
+            <div className="w-32 sm:w-1/3 shrink-0">
+               <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-stone-100 border border-stone-100 shadow-md relative flex items-center justify-center group">
+                 {displayImage && !usingPlaceholder ? (
+                    <img src={displayImage} onError={handleImageError} className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105`} alt={data.name} />
+                 ) : (
+                    <WineBottlePlaceholder />
+                 )}
+                 {data.vintage && <div className="absolute top-2 left-2 bg-white/95 text-wine-900 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm backdrop-blur-md z-20">{data.vintage}</div>}
+               </div>
+            </div>
+            <div className="flex-1 flex flex-col min-w-0">
+                <div className="mb-2">
+                    <a href={mapUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1 bg-wine-100/40 text-wine-800 rounded-md text-[9px] font-black uppercase tracking-widest border border-wine-100 transition-colors hover:bg-wine-200/50">
+                        <MapPin className="w-2.5 h-2.5 text-wine-600" />
+                        <span className="line-clamp-1 underline underline-offset-2 decoration-wine-300">{data.country}</span>
                     </a>
-                    <h2 className="text-xl sm:text-3xl font-sans font-black text-wine-950 leading-[1.1] tracking-tight mb-2 line-clamp-3">
-                      {data.name}
-                    </h2>
-                    <div className="flex flex-wrap gap-1.5 mb-2">
-                        <span className="px-2 py-0.5 bg-wine-50 text-wine-900 text-[9px] font-bold rounded-md uppercase tracking-wide border border-wine-100 truncate max-w-full">{data.region}</span>
-                        {data.varietals.slice(0, 1).map(v => <span key={v} className="px-2 py-0.5 bg-stone-100 text-stone-600 text-[9px] font-bold rounded-md uppercase tracking-wide border border-stone-200">{v}</span>)}
-                    </div>
-                    <div className="mb-2.5">
-                       <p className="text-[10px] sm:text-xs text-stone-500 font-medium leading-relaxed line-clamp-3">A {data.styleProfile?.body ? data.styleProfile.body.toLowerCase() : 'classic'} {data.type.toLowerCase()} with {data.abv}. Notes of {data.nose.split(',').slice(0, 2).join(', ')}.</p>
-                    </div>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-serif font-bold text-wine-950 leading-tight tracking-tight mb-2 line-clamp-3">
+                  {data.name}
+                </h2>
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                    <span className="px-2 py-0.5 bg-stone-50 text-wine-900 text-[9px] font-bold rounded-md uppercase tracking-wide border border-stone-100">{data.region}</span>
+                    {data.varietals.slice(0, 1).map(v => <span key={v} className="px-2 py-0.5 bg-stone-100 text-stone-600 text-[9px] font-bold rounded-md uppercase tracking-wide border border-stone-200">{v}</span>)}
+                </div>
+                <div className="mb-1">
+                   <p className="text-[11px] sm:text-xs text-stone-500 font-medium leading-relaxed line-clamp-4">
+                     {data.wineryInfo.split('.').slice(0, 2).join('. ')}. A {data.styleProfile?.body.toLowerCase()} expression with notes of {data.nose.split(',').slice(0, 2).join(', ')}.
+                   </p>
                 </div>
             </div>
-            <div className="bg-stone-50 rounded-xl p-3 border border-stone-100 flex items-center justify-between shadow-sm gap-4 relative overflow-hidden">
-                <div className="flex-1 min-w-0 flex flex-col justify-center">
-                     <p className="text-[10px] text-wine-900 uppercase tracking-widest font-bold mb-1">Market Price</p>
-                     <p className="text-xl sm:text-2xl font-sans font-bold text-wine-950 tabular-nums tracking-tight leading-tight whitespace-normal break-words">{data.marketPrice}</p>
-                </div>
-                <div className="w-px h-10 bg-stone-200/80"></div>
-                {score > 0 ? (
-                    <div className="flex flex-col items-end shrink-0 z-10">
-                        <div className="flex items-center gap-2">
-                            <span className="text-2xl sm:text-3xl font-bold text-wine-900 leading-none tracking-tighter">{rating5Scale}</span>
-                            <div className="bg-wine-900 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm min-w-[28px] text-center self-start mt-1">{score}</div>
-                        </div>
-                        <div className="flex items-center gap-2 mt-1">
-                            <div className="flex -space-x-0.5">{[1,2,3,4,5].map(i => <Star key={i} className={`w-3 h-3 ${i <= Math.round(Number(rating5Scale)) ? 'fill-gold-500 text-gold-500' : 'text-stone-300'}`} />)}</div>
-                            {valueBadge && <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide border bg-white ${valueBadge.color.replace('bg-', 'text-').replace('text-', 'border-')}`}>{valueBadge.label}</span>}
-                        </div>
-                    </div>
-                ) : <div className="text-right py-1"><span className="text-xs text-stone-400 italic">No rating</span></div>}
+        </div>
+
+        {/* MINIMIZED PRICE & RATING SECTION */}
+        <div className="mt-4 bg-stone-50 rounded-2xl p-3 border border-stone-100 flex items-center justify-between shadow-sm gap-3 relative overflow-hidden">
+            <div className="flex-1 min-w-0">
+                 <p className="text-[9px] text-stone-400 uppercase tracking-widest font-black mb-0.5">Market Price</p>
+                 <p className="text-base sm:text-lg font-sans font-bold text-wine-950 tabular-nums tracking-tight leading-none">{data.marketPrice}</p>
             </div>
+            <div className="w-px h-8 bg-stone-200/60"></div>
+            {score > 0 ? (
+                <div className="flex flex-col items-end shrink-0">
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-xl sm:text-2xl font-bold text-wine-950 leading-none tracking-tighter">{rating5Scale}</span>
+                        <div className="bg-wine-900 text-white text-[9px] font-bold px-1 py-0.5 rounded shadow-sm min-w-[24px] text-center">{score}</div>
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-1">
+                        <div className="flex -space-x-0.5">{[1,2,3,4,5].map(i => <Star key={i} className={`w-2.5 h-2.5 ${i <= Math.round(Number(rating5Scale)) ? 'fill-gold-500 text-gold-500' : 'text-stone-300'}`} />)}</div>
+                        {valueBadge && <span className={`text-[7px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-wide border bg-white ${valueBadge.color}`}>{valueBadge.label}</span>}
+                    </div>
+                </div>
+            ) : <div className="text-right"><span className="text-[10px] text-stone-400 italic font-medium">No rating</span></div>}
         </div>
       </div>
 
       {/* Quick Action Overlay (Phase 3.0 Polish) */}
       <div className="px-6 flex justify-end">
-         <button onClick={() => setShowTastingCard(true)} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-wine-900 bg-white border border-wine-100 px-4 py-2 rounded-full shadow-lg hover:bg-wine-50 transition-all active:scale-95">
-           <Share2 className="w-3 h-3" /> Share Tasting Card
+         <button onClick={() => setShowTastingCard(true)} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-stone-500 bg-white border border-stone-100 px-5 py-2.5 rounded-full shadow-lg hover:bg-stone-50 transition-all active:scale-95">
+           <Share2 className="w-3.5 h-3.5" /> SHARE TASTING CARD
          </button>
       </div>
 
@@ -253,17 +266,36 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, on
 
       {/* MY PALATE */}
       <div className="mx-4">
-        <h3 className="ml-3 mb-4 text-[10px] font-bold text-wine-900 uppercase tracking-widest flex items-center gap-2"><PenLine className="w-3 h-3" /> My Palate</h3>
-        <div className="bg-white rounded-[2rem] p-6 shadow-lg border border-stone-100">
-            <div className="flex items-center justify-between mb-4"><span className="text-[10px] font-bold text-wine-900 uppercase tracking-widest">Your Rating</span><div className="flex gap-1">{[1, 2, 3, 4, 5].map((star) => <button key={star} onClick={() => handleRating(star)} className="focus:outline-none transition-transform active:scale-90"><Star className={`w-6 h-6 ${(data.userRating || 0) >= star ? 'fill-wine-600 text-wine-600' : 'text-stone-300'}`} /></button>)}</div></div>
-            <div><span className="text-[10px] font-bold text-wine-900 uppercase tracking-widest block mb-2">Tasting Notes</span><textarea value={noteText} onChange={(e) => setNoteText(e.target.value)} onBlur={handleNoteBlur} placeholder="E.g., Drank with steak, very dry finish. Better after 1 hour." className="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-sm text-stone-700 focus:outline-none focus:border-wine-300 focus:ring-2 focus:ring-wine-50 min-h-[80px] resize-none placeholder:text-stone-400" /></div>
-        </div>
+        <CollapsibleSection title="My Palate" icon={PenLine} defaultOpen={false}>
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-wine-900 uppercase tracking-widest">Your Rating</span>
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button key={star} onClick={() => handleRating(star)} className="focus:outline-none transition-transform active:scale-90">
+                    <Star className={`w-6 h-6 ${(data.userRating || 0) >= star ? 'fill-wine-600 text-wine-600' : 'text-stone-300'}`} />
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <span className="text-[10px] font-bold text-wine-900 uppercase tracking-widest block mb-2">Tasting Notes</span>
+              <textarea 
+                value={noteText} 
+                onChange={(e) => setNoteText(e.target.value)} 
+                onBlur={handleNoteBlur} 
+                placeholder="E.g., Drank with steak, very dry finish. Better after 1 hour." 
+                className="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-sm text-stone-700 focus:outline-none focus:border-wine-300 focus:ring-2 focus:ring-wine-50 min-h-[100px] resize-none placeholder:text-stone-400" 
+              />
+            </div>
+          </div>
+        </CollapsibleSection>
       </div>
 
       {/* ZONE 3: ANALYSIS */}
       <div className="mx-4">
          <h3 className="ml-3 mb-4 text-[10px] font-bold text-wine-900 uppercase tracking-widest flex items-center gap-2"><TrendingUp className="w-3 h-3" /> Value Analysis</h3>
-        {data.aging && <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-[2rem] p-6 text-white shadow-xl shadow-slate-900/20 relative overflow-hidden"><div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div><div className="relative mb-8"><div className="flex justify-between text-[10px] uppercase font-bold text-slate-400 mb-2 tracking-widest"><span>Start</span><span className="text-gold-400">Peak Maturity</span><span>End</span></div><div className="h-2 bg-slate-700/50 rounded-full relative overflow-hidden"><div className="absolute left-[10%] right-[10%] h-full bg-gradient-to-r from-slate-600 via-gold-500 to-slate-600 opacity-80"></div></div><div className="flex justify-between text-sm font-bold mt-2 font-mono tracking-tighter"><span>{data.aging.drinkFrom}</span><span className="text-gold-400 text-base">{data.aging.peakYears}</span><span>{data.aging.drinkUntil}</span></div></div>{data.vintageComparison && data.vintageComparison.length > 0 && <div className="mb-6 bg-slate-800/50 rounded-xl p-4 border border-white/5 shadow-inner"><div className="flex justify-between items-end mb-2"><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Vintage Quality</p><p className="text-[9px] text-slate-500 italic">Scores (0-100)</p></div><VintageChart data={data.vintageComparison} currentVintage={data.vintage} /></div>}<div className="relative bg-white/5 rounded-xl p-5 border border-white/10 backdrop-blur-sm"><div className="flex justify-between items-start mb-3"><p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mt-1">Projected 5yr Value</p><div className="text-right"><span className="text-[9px] block text-slate-500 uppercase font-bold tracking-wide mb-0.5">Investment Grade</span><span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase tracking-wide ${data.aging.investmentPotential?.toLowerCase().includes('high') ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : data.aging.investmentPotential?.toLowerCase().includes('medium') ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-slate-500/10 text-slate-400 border-slate-500/20'}`}>{data.aging.investmentPotential || 'N/A'}</span></div></div><p className="text-sm sm:text-base text-slate-200 leading-relaxed font-medium">{data.aging.estimatedValue5Years}</p><div className="mt-3 flex justify-end"><p className="text-[9px] text-slate-500 italic flex items-center gap-1"><Sparkles className="w-2.5 h-2.5" />Based on market trends</p></div></div></div>}
+        {data.aging && <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-[2rem] p-6 text-white shadow-xl shadow-slate-900/20 relative overflow-hidden"><div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div><div className="relative mb-8"><div className="flex justify-between text-[10px] uppercase font-bold text-slate-400 mb-2 tracking-widest"><span>Start</span><span className="text-gold-400">Peak Maturity</span><span>End</span></div><div className="h-2 bg-slate-700/50 rounded-full relative overflow-hidden"><div className="absolute left-[10%] right-[10%] h-full bg-gradient-to-r from-slate-600 via-gold-500 to-slate-600 opacity-80"></div></div><div className="flex justify-between text-sm font-bold mt-2 font-mono tracking-tighter"><span>{data.aging.drinkFrom}</span><span className="text-gold-400 text-base">{data.aging.peakYears}</span><span>{data.aging.drinkUntil}</span></div></div>{data.vintageComparison && data.vintageComparison.length > 0 && <div className="mb-6 bg-slate-800/50 rounded-xl p-4 border border-white/5 shadow-inner"><div className="flex justify-between items-end mb-2"><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Vintage Quality</p><p className="text-[9px] text-slate-500 italic">Scores (0-100)</p></div>< VintageChart data={data.vintageComparison} currentVintage={data.vintage} /></div>}<div className="relative bg-white/5 rounded-xl p-5 border border-white/10 backdrop-blur-sm"><div className="flex justify-between items-start mb-3"><p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mt-1">Projected 5yr Value</p><div className="text-right"><span className="text-[9px] block text-slate-500 uppercase font-bold tracking-wide mb-0.5">Investment Grade</span><span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase tracking-wide ${data.aging.investmentPotential?.toLowerCase().includes('high') ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : data.aging.investmentPotential?.toLowerCase().includes('medium') ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-slate-500/10 text-slate-400 border-slate-500/20'}`}>{data.aging.investmentPotential || 'N/A'}</span></div></div><p className="text-sm sm:text-base text-slate-200 leading-relaxed font-medium">{data.aging.estimatedValue5Years}</p><div className="mt-3 flex justify-end"><p className="text-[9px] text-slate-500 italic flex items-center gap-1"><Sparkles className="w-2.5 h-2.5" />Based on market trends</p></div></div></div>}
       </div>
 
       {/* ZONE 4: EXPLORER */}

@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from 'react';
 import { CellarItem, WineData } from '../types';
 import { Package, DollarSign, Calendar, Minus, Plus, Trash2, PieChart, Map, Award, Wine } from 'lucide-react';
@@ -9,6 +8,23 @@ interface CellarDashboardProps {
   onRemoveItem: (id: string) => void;
   onViewWine: (wine: WineData) => void;
 }
+
+const AppIllustration = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 400 600" className={className} xmlns="http://www.w3.org/2000/svg">
+    <path d="M117 18.5h48v31.7h-48z" fill="#fff" stroke="#000" strokeWidth="6" />
+    <path d="M117 28h48v61.7h-48z" fill="#d12323" stroke="#000" strokeWidth="6" />
+    <path d="M141 113.8c-42.5 0-71 42.6-71 85.1v255.4h142.1V198.9c0-42.5-28.5-85.1-71.1-85.1z" fill="#4a4a4a" stroke="#000" strokeWidth="8" />
+    <path d="M70 227.3h142.1v142.1H70z" fill="#fff" stroke="#000" strokeWidth="8" />
+    <path d="M70 412.5h142.1v21.3H70z" fill="#4a4a4a" stroke="#000" strokeWidth="8" />
+    <path d="M70 448h142.1v21.3H70z" fill="#882333" stroke="#000" strokeWidth="8" />
+    <path d="M70 483.5h142.1v28.4H70z" fill="#4a4a4a" stroke="#000" strokeWidth="8" />
+    <path d="M78.6 198.9c0-28.4 19-56.8 47.4-56.8" fill="none" stroke="#fff" strokeWidth="4" strokeLinecap="round" />
+    <path d="M106.9 255.7h71M163.7 284.1h35.5M149.5 312.5h49.7M149.5 340.9h28.4" fill="none" stroke="#000" strokeWidth="6" strokeLinecap="round" />
+    <path d="M247.4 269.9h127.8c0 0 0 106.5-63.9 106.5s-63.9-106.5-63.9-106.5z" fill="#fff" stroke="#000" strokeWidth="8" />
+    <path d="M254.5 319.6h113.6c0 0 0 78.1-56.8 78.1s-56.8-78.1-56.8-78.1z" fill="#d12323" stroke="#000" strokeWidth="4" />
+    <path d="M311.3 376.4v71M254.5 447.4h113.6" fill="none" stroke="#000" strokeWidth="8" strokeLinecap="round" />
+  </svg>
+);
 
 const estimatePrice = (priceStr: string): number => {
   if (!priceStr) return 0;
@@ -26,8 +42,8 @@ const WineInventoryThumbnail = ({ wine }: { wine: WineData }) => {
 
   if (!src || error) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-wine-50/50">
-        <Wine className="w-8 h-8 text-wine-200" strokeWidth={1.5} />
+      <div className="w-full h-full flex items-center justify-center bg-wine-50/50 p-2">
+        <AppIllustration className="w-full h-full drop-shadow-sm" />
       </div>
     );
   }
@@ -148,8 +164,8 @@ export const CellarDashboard: React.FC<CellarDashboardProps> = ({ items, onUpdat
 
         {items.length === 0 ? (
           <div className="text-center py-20 px-8 bg-white rounded-[2rem] border-2 border-dashed border-stone-100 mx-4">
-            <div className="bg-stone-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-               <Package className="w-8 h-8 text-stone-200" />
+            <div className="bg-stone-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 p-4">
+               <AppIllustration className="w-full h-full text-stone-200" />
             </div>
             <p className="text-wine-900 font-bold">Your cellar is empty.</p>
             <p className="text-xs text-stone-400 mt-2 leading-relaxed">Start scanning labels to build your personal digital archive.</p>
