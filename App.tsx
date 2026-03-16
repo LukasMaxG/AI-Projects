@@ -322,7 +322,7 @@ const App: React.FC = () => {
 
       <footer className="w-full pt-4 pb-32 mt-4 text-center bg-wine-50 border-t border-wine-100/50">
         <p className="text-[9px] uppercase tracking-widest text-stone-400 font-bold mb-1">Created By Manny Gutierrez</p>
-        <p className="text-[9px] text-stone-400/80">copyright www.MagmaTek.io/p>
+        <p className="text-[9px] text-stone-400/80">copyright www.MagmaTek.io</p>
       </footer>
     </div>
   );
