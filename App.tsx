@@ -7,6 +7,9 @@ import { analyzeWineLabel, searchWineByName } from './services/geminiService';
 import { AnalysisState, WineData, CellarItem } from './types';
 import { Loader2, AlertCircle, Search, ArrowRight, Sparkles, Wine as WineIcon, WifiOff } from 'lucide-react';
 import { Toast, ToastMessage } from './components/Toast';
+import { auth, db } from './firebase';
+import { onAuthStateChanged, User } from 'firebase/auth';
+import { collection, doc, setDoc, onSnapshot, deleteDoc, writeBatch } from 'firebase/firestore';
 
 const AppIllustration = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 400 600" className={className} xmlns="http://www.w3.org/2000/svg">
@@ -48,6 +51,8 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'recent' | 'cellar'>('recent');
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [user, setUser] = useState<User | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
 
   const addToast = useCallback((text: string, type: 'success' | 'info' = 'success') => {
     const id = Math.random().toString(36).substr(2, 9);
@@ -71,45 +76,150 @@ const App: React.FC = () => {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    try {
-      const savedHistory = localStorage.getItem('wineHistory');
-      if (savedHistory) setHistory(JSON.parse(savedHistory));
-      const savedCellar = localStorage.getItem('wineCellar');
-      if (savedCellar) setCellar(JSON.parse(savedCellar));
-    } catch (e) { console.error(e); }
-
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
   }, [addToast]);
 
-  const saveToHistory = (data: WineData) => {
-    setHistory(prev => {
-      const filtered = prev.filter(item => !(item.name === data.name && item.vintage === data.vintage));
-      const newHistory = [data, ...filtered].slice(0, 10);
-      localStorage.setItem('wineHistory', JSON.stringify(newHistory));
-      return newHistory;
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+      setIsAuthReady(true);
+      
+      if (currentUser) {
+        // Migrate local data to Firestore if exists
+        const localHistory = localStorage.getItem('wineHistory');
+        const localCellar = localStorage.getItem('wineCellar');
+        
+        if (localHistory || localCellar) {
+          try {
+            const batch = writeBatch(db);
+            if (localHistory) {
+              const parsedHistory: WineData[] = JSON.parse(localHistory);
+              parsedHistory.forEach(item => {
+                const ref = doc(db, `users/${currentUser.uid}/history/${item.id}`);
+                batch.set(ref, { id: item.id, wine: item, scannedAt: item.timestamp || Date.now() }, { merge: true });
+              });
+              localStorage.removeItem('wineHistory');
+            }
+            if (localCellar) {
+              const parsedCellar: CellarItem[] = JSON.parse(localCellar);
+              parsedCellar.forEach(item => {
+                const ref = doc(db, `users/${currentUser.uid}/cellar/${item.id}`);
+                batch.set(ref, item, { merge: true });
+              });
+              localStorage.removeItem('wineCellar');
+            }
+            await batch.commit();
+            addToast("Local data synced to your account!", "success");
+          } catch (e) {
+            console.error("Migration error", e);
+          }
+        }
+      } else {
+        // Load local data if logged out
+        try {
+          const savedHistory = localStorage.getItem('wineHistory');
+          if (savedHistory) setHistory(JSON.parse(savedHistory));
+          const savedCellar = localStorage.getItem('wineCellar');
+          if (savedCellar) setCellar(JSON.parse(savedCellar));
+        } catch (e) { console.error(e); }
+      }
     });
+    return () => unsubscribe();
+  }, [addToast]);
+
+  useEffect(() => {
+    if (!isAuthReady || !user) return;
+
+    const cellarRef = collection(db, `users/${user.uid}/cellar`);
+    const unsubCellar = onSnapshot(cellarRef, (snapshot) => {
+      const items: CellarItem[] = [];
+      snapshot.forEach(doc => items.push(doc.data() as CellarItem));
+      items.sort((a, b) => b.addedAt - a.addedAt);
+      setCellar(items);
+    }, (error) => {
+      console.error("Cellar sync error", error);
+    });
+
+    const historyRef = collection(db, `users/${user.uid}/history`);
+    const unsubHistory = onSnapshot(historyRef, (snapshot) => {
+      const items: WineData[] = [];
+      snapshot.forEach(doc => items.push(doc.data().wine as WineData));
+      items.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+      setHistory(items);
+    }, (error) => {
+      console.error("History sync error", error);
+    });
+
+    return () => {
+      unsubCellar();
+      unsubHistory();
+    };
+  }, [user, isAuthReady]);
+
+  const saveToHistory = async (data: WineData) => {
+    if (user) {
+      try {
+        const ref = doc(db, `users/${user.uid}/history/${data.id}`);
+        await setDoc(ref, { id: data.id, wine: data, scannedAt: data.timestamp || Date.now() });
+      } catch (e) { console.error(e); }
+    } else {
+      setHistory(prev => {
+        const filtered = prev.filter(item => !(item.name === data.name && item.vintage === data.vintage));
+        const newHistory = [data, ...filtered].slice(0, 10);
+        localStorage.setItem('wineHistory', JSON.stringify(newHistory));
+        return newHistory;
+      });
+    }
   };
 
-  const handleWineUpdate = (updatedData: WineData) => {
+  const handleWineUpdate = async (updatedData: WineData) => {
     if (analysis.status === 'success' && analysis.data?.id === updatedData.id) {
         setAnalysis(prev => ({ ...prev, data: updatedData }));
     }
-    setHistory(prev => {
-        const newHist = prev.map(item => (item.id === updatedData.id ? updatedData : item));
-        localStorage.setItem('wineHistory', JSON.stringify(newHist));
-        return newHist;
-    });
-    setCellar(prev => {
-        const newCellar = prev.map(item => item.wine.id === updatedData.id ? { ...item, wine: updatedData } : item);
-        localStorage.setItem('wineCellar', JSON.stringify(newCellar));
-        return newCellar;
-    });
+    if (user) {
+      try {
+        const historyItem = history.find(i => i.id === updatedData.id);
+        if (historyItem) {
+          await setDoc(doc(db, `users/${user.uid}/history/${updatedData.id}`), { wine: updatedData }, { merge: true });
+        }
+        const cellarItems = cellar.filter(i => i.wine.id === updatedData.id);
+        for (const item of cellarItems) {
+          await setDoc(doc(db, `users/${user.uid}/cellar/${item.id}`), { wine: updatedData }, { merge: true });
+        }
+      } catch (e) { console.error(e); }
+    } else {
+      setHistory(prev => {
+          const newHist = prev.map(item => (item.id === updatedData.id ? updatedData : item));
+          localStorage.setItem('wineHistory', JSON.stringify(newHist));
+          return newHist;
+      });
+      setCellar(prev => {
+          const newCellar = prev.map(item => item.wine.id === updatedData.id ? { ...item, wine: updatedData } : item);
+          localStorage.setItem('wineCellar', JSON.stringify(newCellar));
+          return newCellar;
+      });
+    }
   };
 
-  const handleAddToCellar = (wine: WineData, quantity: number, price?: number) => {
+  const handleAddToCellar = async (wine: WineData, quantity: number, price?: number) => {
+    if (user) {
+      try {
+        const existingItem = cellar.find(i => i.wine.name === wine.name && i.wine.vintage === wine.vintage);
+        if (existingItem) {
+          const ref = doc(db, `users/${user.uid}/cellar/${existingItem.id}`);
+          await setDoc(ref, { quantity: existingItem.quantity + quantity, purchasePrice: price || existingItem.purchasePrice }, { merge: true });
+        } else {
+          const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          const newItem: CellarItem = { id, wine, quantity, purchasePrice: price, addedAt: Date.now() };
+          const ref = doc(db, `users/${user.uid}/cellar/${id}`);
+          await setDoc(ref, newItem);
+        }
+        addToast(`Added ${quantity} bottle${quantity > 1 ? 's' : ''} to cellar!`, 'success');
+      } catch (e) { console.error(e); }
+    } else {
       setCellar(prev => {
           const existingIndex = prev.findIndex(i => i.wine.name === wine.name && i.wine.vintage === wine.vintage);
           let newCellar;
@@ -127,23 +237,45 @@ const App: React.FC = () => {
           addToast(`Added ${quantity} bottle${quantity > 1 ? 's' : ''} to cellar!`, 'success');
           return newCellar;
       });
+    }
   };
 
-  const updateCellarQuantity = (id: string, delta: number) => {
+  const updateCellarQuantity = async (id: string, delta: number) => {
+    if (user) {
+      try {
+        const item = cellar.find(i => i.id === id);
+        if (!item) return;
+        const newQuantity = Math.max(0, item.quantity + delta);
+        const ref = doc(db, `users/${user.uid}/cellar/${id}`);
+        if (newQuantity === 0) {
+          await deleteDoc(ref);
+        } else {
+          await setDoc(ref, { quantity: newQuantity }, { merge: true });
+        }
+      } catch (e) { console.error(e); }
+    } else {
       setCellar(prev => {
           const newCellar = prev.map(item => item.id === id ? { ...item, quantity: Math.max(0, item.quantity + delta) } : item).filter(item => item.quantity > 0);
           localStorage.setItem('wineCellar', JSON.stringify(newCellar));
           return newCellar;
       });
+    }
   };
 
-  const removeCellarItem = (id: string) => {
+  const removeCellarItem = async (id: string) => {
+    if (user) {
+      try {
+        await deleteDoc(doc(db, `users/${user.uid}/cellar/${id}`));
+        addToast("Removed from cellar", "info");
+      } catch (e) { console.error(e); }
+    } else {
       setCellar(prev => {
           const newCellar = prev.filter(item => item.id !== id);
           localStorage.setItem('wineCellar', JSON.stringify(newCellar));
           addToast("Removed from cellar", "info");
           return newCellar;
       });
+    }
   };
 
   const handleImageSelect = async (file: File) => {
@@ -214,7 +346,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen pb-safe-area bg-wine-50 font-sans selection:bg-wine-200 flex flex-col">
-      <Header isOnline={isOnline} />
+      <Header isOnline={isOnline} user={user} />
       <Toast messages={toasts} onRemove={removeToast} />
 
       <main className="max-w-md mx-auto relative z-10 w-full flex-grow">

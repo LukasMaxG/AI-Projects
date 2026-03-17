@@ -38,17 +38,24 @@ Sommelier AI is a Progressive Web App designed to serve as a high-end digital co
     *   Improved placeholder logic with modern SVG bottle silhouettes for missing label images.
 *   **Navigation Flow**: Added intuitive "Back to Search" and "View My Cellar" shortcuts directly on the analysis results page to minimize friction.
 
+### Phase 4: Cloud Sync & Global Cache (Enterprise Scale)
+*   **Firebase Authentication**: Secure Google Sign-In integration allowing users to access their cellar across multiple devices.
+*   **Firestore Database**: Transitioned from local storage to a robust NoSQL cloud database for real-time inventory syncing.
+*   **Global Wine Cache**: Implemented a shared `wines` collection. When any user scans a new wine, the AI analysis is saved globally, providing instant, zero-latency search results for all future users querying the same bottle.
+*   **Seamless Migration**: Automated local-to-cloud data merging for existing users upgrading to authenticated accounts.
+
 ---
 
 ## 🛠 Technical Highlights
 *   **AI Grounding**: All searches utilize Google Search grounding to ensure pricing and winery data are current.
 *   **Zero-Library Charts**: All data visualizations (Donut/Line) are hand-coded SVGs for maximum performance and zero weight.
+*   **Real-Time Cloud Sync**: Firestore `onSnapshot` listeners provide instant UI updates across all active sessions.
 *   **PWA Ready**: Mobile-first responsive design with safe-area padding for notch-equipped devices.
 *   **Smart Fallbacks**: Robust image candidate system that tries multiple online sources before falling back to placeholders.
 
 ## 🚀 Future Roadmap
 *   **Audio Sommelier**: Text-to-speech for regional history and name pronunciations.
-*   **Offline Support**: Service worker implementation for use in low-signal wine cellars.
+*   **Offline Persistence**: Enable Firestore offline caching for use in low-signal wine cellars.
 *   **Commercial Connect**: "Buy Now" integration with major online wine retailers.
 
 *Created by Manny Gutierrez | © www.MagmaTek.com*

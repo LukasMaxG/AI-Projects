@@ -1,11 +1,37 @@
-import React from 'react';
-import { Wine, Sparkles, WifiOff } from 'lucide-react';
+import React, { useState } from 'react';
+import { Wine, Sparkles, WifiOff, LogIn, LogOut, Loader2 } from 'lucide-react';
+import { auth } from '../firebase';
+import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 
 interface HeaderProps {
   isOnline?: boolean;
+  user?: any;
 }
 
-export const Header: React.FC<HeaderProps> = ({ isOnline = true }) => {
+export const Header: React.FC<HeaderProps> = ({ isOnline = true, user }) => {
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+
+  const handleAuth = async () => {
+    if (isAuthenticating) return;
+    setIsAuthenticating(true);
+    try {
+      if (user) {
+        await signOut(auth);
+      } else {
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+      }
+    } catch (error: any) {
+      if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
+        console.log('Authentication cancelled by user.');
+      } else {
+        console.error("Auth error:", error);
+      }
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
   return (
     <header className="bg-gradient-to-br from-wine-950 to-wine-900 text-wine-50 py-2.5 px-6 rounded-b-3xl shadow-xl mb-3 relative overflow-hidden">
       {/* Decorative background element - subtle */}
@@ -28,20 +54,42 @@ export const Header: React.FC<HeaderProps> = ({ isOnline = true }) => {
           </p>
         </div>
         
-        {/* Sleek Compact Logo */}
-        <div className="relative group">
-            {/* Glow effect */}
-            <div className="absolute inset-0 bg-wine-500 rounded-xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
-            
-            {/* Icon Container */}
-            <div className="relative bg-gradient-to-br from-wine-800/90 to-wine-950/90 backdrop-blur-sm p-2 rounded-xl shadow-lg border border-white/10 flex items-center justify-center ring-1 ring-black/20">
-                <Wine className="w-4 h-4 text-wine-100" strokeWidth={1.5} />
-                
-                {/* Notification Badge */}
-                <div className="absolute -top-1 -right-1 bg-gold-500 rounded-full p-0.5 border-2 border-wine-900 shadow-sm flex items-center justify-center">
-                    <Sparkles className="w-1.5 h-1.5 text-white fill-white" />
-                </div>
-            </div>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={handleAuth}
+            disabled={isAuthenticating}
+            className={`text-xs flex items-center gap-1.5 bg-white/10 hover:bg-white/20 transition-colors px-3 py-1.5 rounded-full border border-white/10 ${isAuthenticating ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            {isAuthenticating ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : user ? (
+              <>
+                <img src={user.photoURL || ''} alt="" className="w-4 h-4 rounded-full" />
+                <span className="hidden sm:inline">Sign Out</span>
+              </>
+            ) : (
+              <>
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Sign In</span>
+              </>
+            )}
+          </button>
+
+          {/* Sleek Compact Logo */}
+          <div className="relative group">
+              {/* Glow effect */}
+              <div className="absolute inset-0 bg-wine-500 rounded-xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
+              
+              {/* Icon Container */}
+              <div className="relative bg-gradient-to-br from-wine-800/90 to-wine-950/90 backdrop-blur-sm p-2 rounded-xl shadow-lg border border-white/10 flex items-center justify-center ring-1 ring-black/20">
+                  <Wine className="w-4 h-4 text-wine-100" strokeWidth={1.5} />
+                  
+                  {/* Notification Badge */}
+                  <div className="absolute -top-1 -right-1 bg-gold-500 rounded-full p-0.5 border-2 border-wine-900 shadow-sm flex items-center justify-center">
+                      <Sparkles className="w-1.5 h-1.5 text-white fill-white" />
+                  </div>
+              </div>
+          </div>
         </div>
       </div>
     </header>

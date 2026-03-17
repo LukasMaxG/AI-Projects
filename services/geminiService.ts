@@ -1,6 +1,8 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 import { WineData, WineMatch } from "../types";
+import { collection, query, where, getDocs, setDoc, doc, limit } from "firebase/firestore";
+import { db } from "../firebase";
 
 const SYSTEM_INSTRUCTION = `
 You are an expert Master Sommelier.
@@ -55,11 +57,37 @@ JSON STRUCTURE:
 }
 `;
 
-const parseResponse = (text: string, groundingMetadata: any): WineData => {
+const normalizeSearchKey = (key: string) => key.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+const checkCache = async (searchKey: string): Promise<WineData | null> => {
+  try {
+    const normalizedKey = normalizeSearchKey(searchKey);
+    const q = query(collection(db, "wines"), where("searchKey", "==", normalizedKey), limit(1));
+    const snapshot = await getDocs(q);
+    if (!snapshot.empty) {
+      return snapshot.docs[0].data() as WineData;
+    }
+  } catch (error) {
+    console.error("Cache check failed", error);
+  }
+  return null;
+};
+
+const saveToCache = async (wine: WineData, searchKey: string) => {
+  try {
+    const normalizedKey = normalizeSearchKey(searchKey);
+    const wineToSave = { ...wine, searchKey: normalizedKey };
+    await setDoc(doc(db, "wines", wine.id!), wineToSave);
+  } catch (error) {
+    console.error("Failed to save to cache", error);
+  }
+};
+
+const parseResponse = (text: string, groundingMetadata: any, searchKey: string): WineData => {
   try {
     const data: WineData = JSON.parse(text);
     data.timestamp = Date.now();
-    data.id = `${data.name}-${data.vintage}-${Date.now()}`;
+    data.id = `${data.name}-${data.vintage}-${Date.now()}`.replace(/[^a-zA-Z0-9-]/g, '');
 
     if (!data.onlineImage && data.imageCandidates?.length) {
       data.onlineImage = data.imageCandidates[0];
@@ -70,7 +98,9 @@ const parseResponse = (text: string, groundingMetadata: any): WineData => {
       if (chunk.web?.uri) sources.push(chunk.web.title || chunk.web.uri);
     });
     
-    return { ...data, sources: [...new Set(sources)] };
+    const parsedData = { ...data, sources: [...new Set(sources)] };
+    saveToCache(parsedData, searchKey);
+    return parsedData;
   } catch (error) {
     console.error("Parse Error", error);
     throw new Error("Model returned malformed data. Try a more specific wine.");
@@ -91,36 +121,41 @@ export const analyzeWineLabel = async (base64: string, mimeType: string): Promis
       systemInstruction: SYSTEM_INSTRUCTION,
       responseMimeType: "application/json",
       tools: [{ googleSearch: {} }],
-      // Disable thinking budget to minimize latency for retrieval tasks
       thinkingConfig: { thinkingBudget: 0 }
     }
   });
 
-  return parseResponse(response.text, response.candidates?.[0]?.groundingMetadata);
+  // We don't have a perfect search key for an image, so we use the generated name + vintage
+  const tempParsed = JSON.parse(response.text);
+  const searchKey = `${tempParsed.name} ${tempParsed.vintage}`;
+  
+  return parseResponse(response.text, response.candidates?.[0]?.groundingMetadata, searchKey);
 };
 
-export const searchWineByName = async (query: string): Promise<WineData> => {
+export const searchWineByName = async (queryStr: string): Promise<WineData> => {
+  const cached = await checkCache(queryStr);
+  if (cached) return cached;
+
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
-    contents: `Report for: ${query}`,
+    contents: `Report for: ${queryStr}`,
     config: {
       systemInstruction: SYSTEM_INSTRUCTION,
       responseMimeType: "application/json",
       tools: [{ googleSearch: {} }],
-      // Disable thinking budget to minimize latency for retrieval tasks
       thinkingConfig: { thinkingBudget: 0 }
     }
   });
 
-  return parseResponse(response.text, response.candidates?.[0]?.groundingMetadata);
+  return parseResponse(response.text, response.candidates?.[0]?.groundingMetadata, queryStr);
 };
 
-export const searchWineMatches = async (query: string): Promise<WineMatch[]> => {
+export const searchWineMatches = async (queryStr: string): Promise<WineMatch[]> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
-    contents: `List 3 likely wine matches for query: "${query}"`,
+    contents: `List 3 likely wine matches for query: "${queryStr}"`,
     config: {
       responseMimeType: "application/json",
       thinkingConfig: { thinkingBudget: 0 },

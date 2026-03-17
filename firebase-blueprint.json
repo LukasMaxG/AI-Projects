@@ -1,0 +1,72 @@
+{
+  "entities": {
+    "WineData": {
+      "title": "WineData",
+      "description": "Global cache of wine analysis data",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "vintage": { "type": "string" },
+        "winery": { "type": "string" },
+        "region": { "type": "string" },
+        "varietal": { "type": "string" },
+        "type": { "type": "string" },
+        "tastingNotes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "foodPairings": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "estimatedPrice": { "type": "string" },
+        "drinkability": { "type": "string" },
+        "history": { "type": "string" },
+        "onlineImage": { "type": "string" },
+        "localImage": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "searchKey": { "type": "string" }
+      },
+      "required": ["id", "name", "vintage", "searchKey"]
+    },
+    "CellarItem": {
+      "title": "CellarItem",
+      "description": "User's personal cellar inventory",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "wine": { "$ref": "#/entities/WineData" },
+        "quantity": { "type": "number" },
+        "purchasePrice": { "type": "number" },
+        "addedAt": { "type": "number" }
+      },
+      "required": ["id", "wine", "quantity", "addedAt"]
+    },
+    "HistoryItem": {
+      "title": "HistoryItem",
+      "description": "User's personal scan/search history",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "wine": { "$ref": "#/entities/WineData" },
+        "scannedAt": { "type": "number" }
+      },
+      "required": ["id", "wine", "scannedAt"]
+    }
+  },
+  "firestore": {
+    "/wines/{wineId}": {
+      "schema": { "$ref": "#/entities/WineData" },
+      "description": "Global cache of wine analysis"
+    },
+    "/users/{userId}/cellar/{itemId}": {
+      "schema": { "$ref": "#/entities/CellarItem" },
+      "description": "User's cellar inventory"
+    },
+    "/users/{userId}/history/{itemId}": {
+      "schema": { "$ref": "#/entities/HistoryItem" },
+      "description": "User's scan/search history"
+    }
+  }
+}
