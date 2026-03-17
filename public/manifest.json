@@ -1,0 +1,17 @@
+{
+  "name": "Sommelier AI",
+  "short_name": "Sommelier AI",
+  "description": "Intelligent Wine Analysis",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fdf4f5",
+  "theme_color": "#400e16",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

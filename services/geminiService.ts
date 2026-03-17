@@ -2,7 +2,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { WineData, WineMatch } from "../types";
 import { collection, query, where, getDocs, setDoc, doc, limit } from "firebase/firestore";
-import { db } from "../firebase";
+import { db, auth } from "../firebase";
 
 const SYSTEM_INSTRUCTION = `
 You are an expert Master Sommelier.
@@ -74,10 +74,11 @@ const checkCache = async (searchKey: string): Promise<WineData | null> => {
 };
 
 const saveToCache = async (wine: WineData, searchKey: string) => {
+  if (!auth.currentUser) return; // Only save to cache if authenticated
   try {
     const normalizedKey = normalizeSearchKey(searchKey);
     const wineToSave = { ...wine, searchKey: normalizedKey };
-    await setDoc(doc(db, "wines", wine.id!), wineToSave);
+    await setDoc(doc(db, "wines", wine.id!), wineToSave, { merge: true });
   } catch (error) {
     console.error("Failed to save to cache", error);
   }

@@ -21,13 +21,13 @@ service cloud.firestore {
     match /wines/{wineId} {
       // Anyone can read the global cache
       allow read: if true;
-      // Authenticated users can create new cache entries
-      allow create: if isAuthenticated() 
+      // Authenticated users can create or update cache entries
+      allow create, update: if isAuthenticated() 
                     && hasRequiredFields(['id', 'name', 'vintage', 'searchKey'])
                     && validStringLength('name', 1, 250)
                     && validStringLength('searchKey', 1, 250);
-      // No updates or deletes to the global cache to prevent abuse
-      allow update, delete: if false;
+      // No deletes to the global cache to prevent abuse
+      allow delete: if false;
     }
 
     // User's personal data
