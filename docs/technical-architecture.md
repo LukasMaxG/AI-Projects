@@ -27,6 +27,7 @@
 **Reasoning**:
 *   **User Flow**: Standard browser `alerts` break the "luxury" immersion. Toasts allow users to continue interacting while receiving feedback.
 *   **Consistency**: Centralized state ensures multiple notifications queue correctly without overlapping.
+*   **Error Handling**: Extended to support error states, replacing all native `alert()` calls and silent console errors to ensure a robust, production-ready user experience.
 
 ### 4. High-Fidelity Social Assets (Tasting Cards)
 **Decision**: Implementing a dedicated "Digital Tasting Card" as a modal component.

@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
-import { CheckCircle, Info, X } from 'lucide-react';
+import { CheckCircle, Info, AlertCircle, X } from 'lucide-react';
 
 export interface ToastMessage {
   id: string;
   text: string;
-  type: 'success' | 'info';
+  type: 'success' | 'info' | 'error';
 }
 
 interface ToastProps {
@@ -30,8 +30,8 @@ const ToastItem: React.FC<{ message: ToastMessage; onRemove: (id: string) => voi
 
   return (
     <div className="pointer-events-auto animate-slide-down bg-white/95 backdrop-blur-md border border-wine-100 rounded-2xl p-4 shadow-2xl flex items-center gap-3 ring-1 ring-black/5">
-      <div className={`p-2 rounded-full ${message.type === 'success' ? 'bg-emerald-50 text-emerald-600' : 'bg-wine-50 text-wine-600'}`}>
-        {message.type === 'success' ? <CheckCircle className="w-4 h-4" /> : <Info className="w-4 h-4" />}
+      <div className={`p-2 rounded-full ${message.type === 'success' ? 'bg-emerald-50 text-emerald-600' : message.type === 'error' ? 'bg-red-50 text-red-600' : 'bg-wine-50 text-wine-600'}`}>
+        {message.type === 'success' ? <CheckCircle className="w-4 h-4" /> : message.type === 'error' ? <AlertCircle className="w-4 h-4" /> : <Info className="w-4 h-4" />}
       </div>
       <p className="flex-1 text-sm font-bold text-wine-900 leading-tight">
         {message.text}

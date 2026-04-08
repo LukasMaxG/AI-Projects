@@ -109,7 +109,7 @@ const parseResponse = (text: string, groundingMetadata: any, searchKey: string):
 };
 
 export const analyzeWineLabel = async (base64: string, mimeType: string): Promise<WineData> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
     contents: {
@@ -137,7 +137,7 @@ export const searchWineByName = async (queryStr: string): Promise<WineData> => {
   const cached = await checkCache(queryStr);
   if (cached) return cached;
 
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
     contents: `Report for: ${queryStr}`,
@@ -153,7 +153,7 @@ export const searchWineByName = async (queryStr: string): Promise<WineData> => {
 };
 
 export const searchWineMatches = async (queryStr: string): Promise<WineMatch[]> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
     contents: `List 3 likely wine matches for query: "${queryStr}"`,

@@ -5,7 +5,7 @@ import { WineDisplay } from './components/WineDisplay';
 import { CellarDashboard } from './components/CellarDashboard';
 import { analyzeWineLabel, searchWineByName } from './services/geminiService';
 import { AnalysisState, WineData, CellarItem } from './types';
-import { Loader2, AlertCircle, Search, ArrowRight, Sparkles, Wine as WineIcon, WifiOff } from 'lucide-react';
+import { Loader2, AlertCircle, Search, ArrowRight, Sparkles, Wine as WineIcon, WifiOff, Facebook, Instagram, Twitter } from 'lucide-react';
 import { Toast, ToastMessage } from './components/Toast';
 import { auth, db } from './firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
@@ -54,7 +54,7 @@ const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
 
-  const addToast = useCallback((text: string, type: 'success' | 'info' = 'success') => {
+  const addToast = useCallback((text: string, type: 'success' | 'info' | 'error' = 'success') => {
     const id = Math.random().toString(36).substr(2, 9);
     setToasts(prev => [...prev, { id, text, type }]);
   }, []);
@@ -115,6 +115,7 @@ const App: React.FC = () => {
             addToast("Local data synced to your account!", "success");
           } catch (e) {
             console.error("Migration error", e);
+            addToast("Failed to sync local data.", "error");
           }
         }
       } else {
@@ -164,7 +165,10 @@ const App: React.FC = () => {
       try {
         const ref = doc(db, `users/${user.uid}/history/${data.id}`);
         await setDoc(ref, { id: data.id, wine: data, scannedAt: data.timestamp || Date.now() });
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        console.error(e);
+        addToast("Failed to save to history.", "error");
+      }
     } else {
       setHistory(prev => {
         const filtered = prev.filter(item => !(item.name === data.name && item.vintage === data.vintage));
@@ -189,7 +193,10 @@ const App: React.FC = () => {
         for (const item of cellarItems) {
           await setDoc(doc(db, `users/${user.uid}/cellar/${item.id}`), { wine: updatedData }, { merge: true });
         }
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        console.error(e);
+        addToast("Failed to update wine details.", "error");
+      }
     } else {
       setHistory(prev => {
           const newHist = prev.map(item => (item.id === updatedData.id ? updatedData : item));
@@ -218,7 +225,10 @@ const App: React.FC = () => {
           await setDoc(ref, newItem);
         }
         addToast(`Added ${quantity} bottle${quantity > 1 ? 's' : ''} to cellar!`, 'success');
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        console.error(e);
+        addToast("Failed to add to cellar.", "error");
+      }
     } else {
       setCellar(prev => {
           const existingIndex = prev.findIndex(i => i.wine.name === wine.name && i.wine.vintage === wine.vintage);
@@ -252,7 +262,10 @@ const App: React.FC = () => {
         } else {
           await setDoc(ref, { quantity: newQuantity }, { merge: true });
         }
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        console.error(e);
+        addToast("Failed to update quantity.", "error");
+      }
     } else {
       setCellar(prev => {
           const newCellar = prev.map(item => item.id === id ? { ...item, quantity: Math.max(0, item.quantity + delta) } : item).filter(item => item.quantity > 0);
@@ -267,7 +280,10 @@ const App: React.FC = () => {
       try {
         await deleteDoc(doc(db, `users/${user.uid}/cellar/${id}`));
         addToast("Removed from cellar", "info");
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        console.error(e);
+        addToast("Failed to remove item.", "error");
+      }
     } else {
       setCellar(prev => {
           const newCellar = prev.filter(item => item.id !== id);
@@ -342,6 +358,28 @@ const App: React.FC = () => {
     setAnalysis({ status: 'idle' });
     setActiveTab('cellar');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleShare = async (platform: 'facebook' | 'twitter' | 'instagram') => {
+    const url = window.location.origin;
+    const text = "Check out Sommelier AI - Your personal intelligent wine assistant!";
+    
+    if (platform === 'facebook') {
+      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+    } else if (platform === 'twitter') {
+      window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank');
+    } else if (platform === 'instagram') {
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: 'Sommelier AI', text, url });
+        } catch (e) {
+          console.error("Error sharing:", e);
+        }
+      } else {
+        navigator.clipboard.writeText(url);
+        addToast("Link copied to clipboard for Instagram!", "success");
+      }
+    }
   };
 
   return (
@@ -452,7 +490,18 @@ const App: React.FC = () => {
 
       <ScanButton onImageSelect={handleImageSelect} disabled={analysis.status === 'analyzing' || !isOnline} />
 
-      <footer className="w-full pt-4 pb-32 mt-4 text-center bg-wine-50 border-t border-wine-100/50">
+      <footer className="w-full pt-6 pb-32 mt-4 text-center bg-wine-50 border-t border-wine-100/50">
+        <div className="flex justify-center gap-6 mb-6">
+          <button onClick={() => handleShare('facebook')} className="text-stone-400 hover:text-wine-600 transition-colors p-2 bg-white rounded-full shadow-sm border border-stone-100" aria-label="Share on Facebook">
+            <Facebook className="w-5 h-5" />
+          </button>
+          <button onClick={() => handleShare('twitter')} className="text-stone-400 hover:text-wine-600 transition-colors p-2 bg-white rounded-full shadow-sm border border-stone-100" aria-label="Share on X (Twitter)">
+            <Twitter className="w-5 h-5" />
+          </button>
+          <button onClick={() => handleShare('instagram')} className="text-stone-400 hover:text-wine-600 transition-colors p-2 bg-white rounded-full shadow-sm border border-stone-100" aria-label="Share on Instagram">
+            <Instagram className="w-5 h-5" />
+          </button>
+        </div>
         <p className="text-[9px] uppercase tracking-widest text-stone-400 font-bold mb-1">Created By Manny Gutierrez</p>
         <p className="text-[9px] text-stone-400/80">copyright www.MagmaTek.io</p>
       </footer>

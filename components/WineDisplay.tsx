@@ -10,7 +10,7 @@ interface WineDisplayProps {
   imagePreview: string | null;
   onUpdateWine: (updatedData: WineData) => void;
   onAddToCellar: (wine: WineData, quantity: number, price?: number) => void;
-  onToast: (text: string, type?: 'success' | 'info') => void;
+  onToast: (text: string, type?: 'success' | 'info' | 'error') => void;
   onBackToSearch: () => void;
   onViewCellar: () => void;
 }
@@ -167,7 +167,7 @@ export const WineDisplay: React.FC<WineDisplayProps> = ({ data, imagePreview, on
         </div>
       )}
 
-      {showTastingCard && <TastingCard wine={data} onClose={() => setShowTastingCard(false)} />}
+      {showTastingCard && <TastingCard wine={data} onClose={() => setShowTastingCard(false)} onToast={onToast} />}
 
       <div className="mx-6">
         <button onClick={onBackToSearch} className="mb-4 text-[10px] font-extrabold text-stone-400 uppercase tracking-widest hover:text-wine-600 flex items-center gap-1.5 transition-colors group">

@@ -5,9 +5,10 @@ import { Wine, MapPin, Award, Star, Share2, X, Download } from 'lucide-react';
 interface TastingCardProps {
   wine: WineData;
   onClose: () => void;
+  onToast: (text: string, type?: 'success' | 'info' | 'error') => void;
 }
 
-export const TastingCard: React.FC<TastingCardProps> = ({ wine, onClose }) => {
+export const TastingCard: React.FC<TastingCardProps> = ({ wine, onClose, onToast }) => {
   const score = wine.criticScores?.[0]?.score || 'N/A';
 
   const handleShare = async () => {
@@ -23,7 +24,7 @@ export const TastingCard: React.FC<TastingCardProps> = ({ wine, onClose }) => {
       }
     } else {
       navigator.clipboard.writeText(`Tasting: ${wine.name} (${wine.vintage}). Region: ${wine.region}. Rating: ${score}. Checked via Sommelier AI.`);
-      alert('Tasting summary copied to clipboard!');
+      onToast('Tasting summary copied to clipboard!', 'success');
     }
   };
 
